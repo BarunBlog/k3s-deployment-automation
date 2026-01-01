@@ -1,0 +1,79 @@
+##################################
+# OS / Editor
+##################################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+##################################
+# Python
+##################################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+pip-wheel-metadata/
+
+##################################
+# Pulumi
+##################################
+# Pulumi state files (VERY IMPORTANT)
+Pulumi.*.yaml
+!Pulumi.yaml
+!Pulumi.dev.yaml
+!Pulumi.prod.yaml
+
+.pulumi/
+*.tgz
+
+##################################
+# Ansible
+##################################
+*.retry
+ansible.log
+*.pem
+*.key
+
+# Inventory generated dynamically
+ansible/inventory/hosts.ini
+
+##################################
+# SSH
+##################################
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.pem
+
+##################################
+# Kubernetes / k3s
+##################################
+kubeconfig
+k3s.yaml
+
+##################################
+# GitHub Actions
+##################################
+# Local runner files (if any)
+.actions-runner/
+
+##################################
+# Logs & Temp
+##################################
+*.log
+*.tmp
+*.cache
+
+##################################
+# Terraform (just in case later)
+##################################
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
