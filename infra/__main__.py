@@ -21,6 +21,7 @@ vpc = ec2.Vpc(
 )
 
 # Create subnets
+# Public Subnet
 public_subnet = ec2.Subnet('public-subnet',
     vpc_id=vpc.id,
     cidr_block='10.0.1.0/24',
@@ -31,6 +32,7 @@ public_subnet = ec2.Subnet('public-subnet',
     }
 )
 
+# Private Subnet
 private_subnet = ec2.Subnet('private-subnet',
     vpc_id=vpc.id,
     cidr_block='10.0.2.0/24',
