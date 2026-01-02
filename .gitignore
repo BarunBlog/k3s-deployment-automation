@@ -41,7 +41,7 @@ ansible.log
 *.key
 
 # Inventory generated dynamically
-ansible/inventory/hosts.ini
+# ansible/inventory/hosts.ini
 
 ##################################
 # SSH
