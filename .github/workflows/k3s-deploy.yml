@@ -4,7 +4,7 @@ name: K3s deployment using Ansible
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - ansible/**
 
