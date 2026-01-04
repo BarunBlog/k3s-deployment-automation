@@ -1,8 +1,7 @@
 ---
-- name: Update and upgrade apt packages for ubuntu
+- name: Update apt cache
   apt:
     update_cache: yes
-    upgrade: dist
     force_apt_get: yes
 
 - name: Install necessary dependencies
