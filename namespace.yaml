@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: development
+  labels:
+    environment: development
+    team: software-engineering
+  annotations:
+    description: "Development environment for SE team"
