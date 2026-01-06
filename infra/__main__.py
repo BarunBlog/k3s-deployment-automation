@@ -2,11 +2,14 @@ import os
 import pulumi
 import pulumi_aws as aws
 import pulumi_aws.ec2 as ec2
-from pulumi_aws.ec2 import SecurityGroupRuleArgs
 
 # Configuration setup
 config = pulumi.Config()
-instance_type = 't3.small'
+
+master_instance_type = 't3.medium'
+worker_instance_type = 't3.small'
+runner_instance_type = 't3.small'
+
 ami = "ami-060e277c0d4cce553"
 
 # Create a VPC
@@ -100,7 +103,7 @@ private_route_table_association = ec2.RouteTableAssociation(
 )
 
 # Security Group for allowing SSH and k3s traffic
-security_group = aws.ec2.SecurityGroup("web-secgrp",
+security_group = aws.ec2.SecurityGroup("k3s-instance-sec-grp",
     description='Enable SSH and K3s access',
     vpc_id=vpc.id,
     ingress=[
@@ -124,7 +127,31 @@ security_group = aws.ec2.SecurityGroup("web-secgrp",
         "cidr_blocks": ["0.0.0.0/0"],
     }],
     tags={
-        'Name': 'k3s-secgrp',
+        'Name': 'k3s-instance-sec-grp',
+    }
+)
+
+# Security group for load balancer
+alb_security_group = aws.ec2.SecurityGroup(
+    "alb-sec-grp",
+    vpc_id=vpc.id,
+    description="Allow HTTP",
+    ingress=[
+        {
+            "protocol": "tcp",
+            "from_port":80,
+            "to_port":80,
+            "cidr_blocks": ["0.0.0.0/0"],
+        },
+    ],
+    egress=[{
+        "protocol": "-1",
+        "from_port": 0,
+        "to_port": 0,
+        "cidr_blocks": ["0.0.0.0/0"],
+    }],
+    tags={
+        'Name': 'alb-sec-grp',
     }
 )
 
@@ -140,7 +167,7 @@ key_pair = aws.ec2.KeyPair("my-key-pair",
 # EC2 instances
 master_instance = ec2.Instance(
     'master-instance',
-    instance_type=instance_type,
+    instance_type=master_instance_type,
     ami=ami,
     subnet_id=private_subnet.id,
     vpc_security_group_ids=[security_group.id],
@@ -150,8 +177,10 @@ master_instance = ec2.Instance(
     }
 )
 
+worker_instance_ids = []
+
 worker_instance_1 = ec2.Instance('worker-instance-1',
-    instance_type=instance_type,
+    instance_type=worker_instance_type,
     ami=ami,
     subnet_id=private_subnet.id,
     vpc_security_group_ids=[security_group.id],
@@ -161,8 +190,10 @@ worker_instance_1 = ec2.Instance('worker-instance-1',
     }
 )
 
+worker_instance_ids.append(worker_instance_1.id)
+
 worker_instance_2 = ec2.Instance('worker-instance-2',
-    instance_type=instance_type,
+    instance_type=worker_instance_type,
     ami=ami,
     subnet_id=private_subnet.id,
     vpc_security_group_ids=[security_group.id],
@@ -172,8 +203,10 @@ worker_instance_2 = ec2.Instance('worker-instance-2',
     }
 )
 
+worker_instance_ids.append(worker_instance_2.id)
+
 git_runner_instance = ec2.Instance('git-runner-instance',
-    instance_type=instance_type,
+    instance_type=runner_instance_type,
     ami=ami,
     subnet_id=public_subnet.id,
     vpc_security_group_ids=[security_group.id],
@@ -183,8 +216,55 @@ git_runner_instance = ec2.Instance('git-runner-instance',
     }
 )
 
+# Creating application load balancer
+alb = aws.lb.LoadBalancer(
+    'k3s-alb',
+    internal=False,
+    load_balancer_type="application",
+    security_groups=[alb_security_group.id],
+    subnets=[public_subnet.id],
+    tags={"Name": "k3s-app-alb"},
+)
+
+# ALB Target Group
+target_group = aws.lb.TargetGroup(
+    "k3s-nodeport-alb-tg",
+    port=30080,           # NodePort of ingress-nginx or service
+    protocol="HTTP",
+    vpc_id=vpc.id,
+    target_type="instance",
+    health_check={
+        "path": "/healthz",
+        "protocol": "HTTP",
+        "port": "traffic-port",
+    },
+    tags={"Name": "k3s-nodeport-alb-tg"},
+)
+
+# ALB Listener
+listener = aws.lb.Listener("http-alb-listener",
+    load_balancer_arn=alb.arn,
+    port=80,
+    protocol="HTTP",
+    default_actions=[aws.lb.ListenerDefaultActionArgs(
+        type="forward",
+        target_group_arn=target_group.arn,
+    )],
+)
+
+# Attach Worker Nodes
+for i, instance_id in enumerate(worker_instance_ids):
+    aws.lb.TargetGroupAttachment(
+        f"worker-{i}",
+        target_group_arn=target_group.arn,
+        target_id=instance_id,
+        port=30080,
+    )
+
+
 # Output the instance IP addresses
 pulumi.export('git_runner_public_ip', git_runner_instance.public_ip)
 pulumi.export('master_private_ip', master_instance.private_ip)
 pulumi.export('worker1_private_ip', worker_instance_1.private_ip)
 pulumi.export('worker2_private_ip', worker_instance_2.private_ip)
+pulumi.export("alb_dns", alb.dns_name)
