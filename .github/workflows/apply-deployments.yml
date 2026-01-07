@@ -60,6 +60,15 @@ jobs:
             # Print commands to debug issues
             set -ex
           
+            # Define cleanup function
+            cleanup() {
+              echo "Cleaning up kubeconfig..."
+              rm -f ~/.kube/config
+            }
+          
+            # Execute cleanup on exit (normal or error)
+            trap cleanup EXIT
+          
             # Install kubectl (Needed for raw manifests and Helm)
             if ! command -v kubectl &> /dev/null; then
               echo "Installing kubectl..."
@@ -112,7 +121,7 @@ jobs:
               -f helm/ingress-nginx/values-prod.yaml
 
             # Create namespaces
-            kubectl create namespace ${{ secrets.ENVIRONMENT }}
+            kubectl create namespace ${{ secrets.ENVIRONMENT }} --dry-run=client -o yaml | kubectl apply -f -
           
             # Set the current context to the desired namespace
             kubectl config set-context --current --namespace=${{ secrets.ENVIRONMENT }}
