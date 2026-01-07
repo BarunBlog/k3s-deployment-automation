@@ -118,6 +118,30 @@ private_route_table_association = ec2.RouteTableAssociation(
     route_table_id=private_route_table.id
 )
 
+# Security group for load balancer
+alb_security_group = aws.ec2.SecurityGroup(
+    "alb-sec-grp",
+    vpc_id=vpc.id,
+    description="Allow HTTP",
+    ingress=[
+        {
+            "protocol": "tcp",
+            "from_port":80,
+            "to_port":80,
+            "cidr_blocks": ["0.0.0.0/0"],
+        },
+    ],
+    egress=[{
+        "protocol": "-1",
+        "from_port": 0,
+        "to_port": 0,
+        "cidr_blocks": ["0.0.0.0/0"],
+    }],
+    tags={
+        'Name': 'alb-sec-grp',
+    }
+)
+
 # Security Group for allowing SSH and k3s traffic
 security_group = aws.ec2.SecurityGroup("k3s-instance-sec-grp",
     description='Enable SSH and K3s access',
@@ -142,29 +166,12 @@ security_group = aws.ec2.SecurityGroup("k3s-instance-sec-grp",
             "to_port": 0,
             "self": True,
         },
-    ],
-    egress=[{
-        "protocol": "-1",
-        "from_port": 0,
-        "to_port": 0,
-        "cidr_blocks": ["0.0.0.0/0"],
-    }],
-    tags={
-        'Name': 'k3s-instance-sec-grp',
-    }
-)
-
-# Security group for load balancer
-alb_security_group = aws.ec2.SecurityGroup(
-    "alb-sec-grp",
-    vpc_id=vpc.id,
-    description="Allow HTTP",
-    ingress=[
         {
             "protocol": "tcp",
-            "from_port":80,
-            "to_port":80,
-            "cidr_blocks": ["0.0.0.0/0"],
+            "from_port": 30080,
+            "to_port": 30080,
+            "security_groups": [alb_security_group.id], # Allow the ALB specifically
+            "description": "Allow traffic from ALB to NGINX NodePort",
         },
     ],
     egress=[{
@@ -174,7 +181,7 @@ alb_security_group = aws.ec2.SecurityGroup(
         "cidr_blocks": ["0.0.0.0/0"],
     }],
     tags={
-        'Name': 'alb-sec-grp',
+        'Name': 'k3s-instance-sec-grp',
     }
 )
 
