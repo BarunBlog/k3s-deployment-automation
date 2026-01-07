@@ -56,10 +56,17 @@ jobs:
       - name: SSH into GitHub Runner and deploy manifests
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
+          
+            # Install kubectl (Needed for raw manifests and Helm)
+            if ! command -v kubectl &> /dev/null; then
+              echo "Installing kubectl..."
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+            fi
             
             # Get Kubeconfig from Master Node
             # We use SSH from the Runner to the Master to grab the file
-            ssh -o StrictHostKeyChecking=no ubuntu@${{ env.MASTER_NODE_IP }} "sudo cat /etc/rancher/k3s/k3s.yaml" > k3s-temp.yaml
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/my-key-pair.pem ubuntu@${{ env.MASTER_NODE_IP }} "sudo cat /etc/rancher/k3s/k3s.yaml" > k3s-temp.yaml
             
             # Update the API Server address in the config
             # Replace 127.0.0.1 with the actual Private IP of the Master Node
