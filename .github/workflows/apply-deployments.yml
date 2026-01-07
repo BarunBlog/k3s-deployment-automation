@@ -1,0 +1,73 @@
+name: Apply Kubernetes Manifests
+
+on:
+  workflow_run:
+    workflows: ["K3s deployment using Ansible"]
+    types:
+      - completed
+
+jobs:
+  apply_manifests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: SSH into GitHub Runner and deploy manifests
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
+            
+            # Create a working directory for infra repo
+            if [ ! -d "ecommerce-kubernetes-infra" ]; then
+              git clone https://github.com/BarunBlog/ecommerce-kubernetes-infra.git
+            else
+              cd ecommerce-kubernetes-infra
+              git pull
+            fi
+            cd ecommerce-kubernetes-infra
+
+            # Install Helm if not installed
+            if ! command -v helm &> /dev/null
+            then
+              echo "Installing Helm..."
+              curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+            fi
+
+            # Add ingress-nginx repo
+            helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
+            helm repo update
+
+            # Apply ingress-nginx
+            helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+              --namespace ingress-nginx --create-namespace \
+              -f helm/ingress-nginx/values-prod.yaml
+
+            # Apply namespaces
+            kubectl apply -f namespace.yaml
+
+            # Apply ConfigMaps
+            # kubectl apply -f k8s/config/
+
+            # Apply Secrets
+            kubectl apply -f secrets/
+
+            # Apply RabbitMQ
+            kubectl apply -f rabbitmq/
+
+            # Apply Services
+            for service in services/*; do
+              kubectl apply -f $service/
+            done
+
+            # Apply Ingresses
+            kubectl apply -f ingress/
+
+            echo "All manifests applied successfully."
+          EOF
