@@ -6,6 +6,8 @@ on:
     types:
       - completed
 
+  workflow_dispatch:
+
 jobs:
   apply_manifests:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
