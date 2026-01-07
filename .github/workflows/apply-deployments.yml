@@ -15,6 +15,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Pulumi login
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: pulumi login
+
+      - name: Pulumi stack select
+        run: pulumi stack select dev --cwd infra
+
+      - name: Pulumi refresh
+        run: pulumi refresh --yes --cwd infra
+
+      - name: Save Pulumi outputs
+        id: pulumi_outputs
+        run: |
+          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
+          echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
       - name: Set up SSH agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
