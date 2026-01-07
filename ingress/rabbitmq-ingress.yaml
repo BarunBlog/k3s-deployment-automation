@@ -3,14 +3,19 @@ kind: Ingress
 metadata:
   name: rabbitmq-ingress
   namespace: development
+  annotations:
+    # This is the magic line that fixes the "Object Not Found" error
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
     - host: k3s-alb-249f37a-1760371909.ap-southeast-1.elb.amazonaws.com
       http:
         paths:
-          - path: /rabbitmq
-            pathType: Prefix
+          # This regex captures everything after /rabbitmq into a variable ($2)
+          - path: /rabbitmq(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: rabbitmq-service
