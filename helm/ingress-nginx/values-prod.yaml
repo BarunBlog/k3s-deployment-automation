@@ -3,4 +3,4 @@ controller:
     type: LoadBalancer
 
   admissionWebhooks:
-    enabled: true
+    enabled: false
