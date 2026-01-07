@@ -7,8 +7,8 @@ import pulumi_aws.ec2 as ec2
 config = pulumi.Config()
 
 master_instance_type = 't3.medium'
-worker_instance_type = 't3.small'
-runner_instance_type = 't3.small'
+worker_instance_type = 't3.medium'
+runner_instance_type = 't3.medium'
 
 ami = "ami-060e277c0d4cce553"
 
