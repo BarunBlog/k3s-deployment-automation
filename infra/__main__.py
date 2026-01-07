@@ -135,6 +135,13 @@ security_group = aws.ec2.SecurityGroup("k3s-instance-sec-grp",
             "to_port": 6443,
             "cidr_blocks": ["0.0.0.0/0"],
         },
+        # ALLOW ALL NODE-TO-NODE TRAFFIC
+        {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "self": True,
+        },
     ],
     egress=[{
         "protocol": "-1",
