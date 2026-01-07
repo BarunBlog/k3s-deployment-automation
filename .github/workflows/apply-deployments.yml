@@ -89,11 +89,11 @@ jobs:
             # Create a working directory for infra repo
             if [ ! -d "ecommerce-kubernetes-infra" ]; then
               git clone https://github.com/BarunBlog/ecommerce-kubernetes-infra.git
+              cd ecommerce-kubernetes-infra
             else
               cd ecommerce-kubernetes-infra
               git pull
             fi
-            cd ecommerce-kubernetes-infra
 
             # Install Helm if not installed
             if ! command -v helm &> /dev/null
