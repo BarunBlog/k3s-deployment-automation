@@ -35,6 +35,16 @@ public_subnet = ec2.Subnet('public-subnet',
     }
 )
 
+# Another public subnet on different az created for the ALB
+public_subnet_2 = ec2.Subnet(
+    'public-subnet-2',
+    vpc_id=vpc.id,
+    cidr_block='10.0.3.0/24',
+    map_public_ip_on_launch=True,
+    availability_zone='ap-southeast-1b',
+    tags={'Name': 'public-subnet-2'},
+)
+
 # Private Subnet
 private_subnet = ec2.Subnet('private-subnet',
     vpc_id=vpc.id,
@@ -66,6 +76,12 @@ public_route_table = ec2.RouteTable('public-route-table',
 public_route_table_association = ec2.RouteTableAssociation(
     'public-route-table-association',
     subnet_id=public_subnet.id,
+    route_table_id=public_route_table.id
+)
+
+ec2.RouteTableAssociation(
+    'public-route-table-association-2',
+    subnet_id=public_subnet_2.id,
     route_table_id=public_route_table.id
 )
 
@@ -222,7 +238,7 @@ alb = aws.lb.LoadBalancer(
     internal=False,
     load_balancer_type="application",
     security_groups=[alb_security_group.id],
-    subnets=[public_subnet.id],
+    subnets=[public_subnet.id, public_subnet_2.id],
     tags={"Name": "k3s-app-alb"},
 )
 
