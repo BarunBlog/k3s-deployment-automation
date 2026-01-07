@@ -42,7 +42,9 @@ jobs:
         id: pulumi_outputs
         run: |
           GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
+          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra)
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
+          echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -54,6 +56,22 @@ jobs:
       - name: SSH into GitHub Runner and deploy manifests
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
+            
+            # Get Kubeconfig from Master Node
+            # We use SSH from the Runner to the Master to grab the file
+            ssh -o StrictHostKeyChecking=no ubuntu@${{ env.MASTER_NODE_IP }} "sudo cat /etc/rancher/k3s/k3s.yaml" > k3s-temp.yaml
+            
+            # Update the API Server address in the config
+            # Replace 127.0.0.1 with the actual Private IP of the Master Node
+            sed -i "s/127.0.0.1/${{ env.MASTER_NODE_IP }}/g" k3s-temp.yaml
+            
+            # Move it to the default location for kubectl/helm
+            mkdir -p ~/.kube
+            mv k3s-temp.yaml ~/.kube/config
+            chmod 600 ~/.kube/config
+            
+            # Verify connection
+            kubectl get nodes
             
             # Create a working directory for infra repo
             if [ ! -d "ecommerce-kubernetes-infra" ]; then
@@ -99,6 +117,9 @@ jobs:
 
             # Apply Ingresses
             kubectl apply -f ingress/
+          
+            # Delete the key once done
+            rm -rf ~/.kube/config
 
             echo "All manifests applied successfully."
           EOF
