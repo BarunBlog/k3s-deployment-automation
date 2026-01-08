@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: rabbitmq.k3s-alb-3cfd375-840479730.ap-southeast-1.elb.amazonaws.com
+    - host: rabbitmq.${ALB_DNS}
       http:
         paths:
           - path: /
