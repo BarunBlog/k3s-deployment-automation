@@ -59,12 +59,13 @@ jobs:
       - name: SSH into GitHub Runner and deploy manifests
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << EOF
-            export ALB_DNS="${{ env.ALB_DNS }}"
-          
-            echo "ALB_DNS inside SSH is: $ALB_DNS"s
             
             # Print commands to debug issues
             set -ex
+          
+            export ALB_DNS="${ALB_DNS}"
+
+            echo "ALB_DNS=$ALB_DNS"
           
             # Define cleanup function
             cleanup() {
@@ -169,18 +170,14 @@ jobs:
 
             # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
             # This creates a temporary version of the YAML with the real DNS
-            mkdir -p ./overlay
-          
-            if [ -z "$ALB_DNS" ]; then
-              echo "ERROR: ALB_DNS is empty"
-              exit 1
-            fi
+            mkdir -p overlay
             
             for f in ingress/*.yaml; do
-              envsubst < "$f" > "./overlay/$(basename "$f")"
+              echo "Processing $f"
+              envsubst < "$f" > "overlay/$(basename "$f")"
             done
             
-            kubectl apply -f ./overlay/ -R
+            kubectl apply -f overlay/
           
             # Delete the key once done
             rm -rf ~/.kube/config
