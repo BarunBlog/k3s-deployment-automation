@@ -163,8 +163,8 @@ jobs:
             # Apply RabbitMQ
             kubectl apply -f rabbitmq/
 
-            # Apply Services
-            kubectl apply -f services/
+            # Apply Services (recursive)
+            kubectl apply -f services/ -R
 
             # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
             # This creates a temporary version of the YAML with the real DNS
