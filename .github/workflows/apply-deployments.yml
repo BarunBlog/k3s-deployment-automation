@@ -166,8 +166,15 @@ jobs:
               kubectl apply -f $service/
             done
 
+            # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
+            # This creates a temporary version of the YAML with the real DNS
+            mkdir -p ./overlay
+            for f in ingress/*.yaml; do
+              envsubst < "$f" > "./overlay/$(basename "$f")"
+            done
+            
             # Apply Ingresses
-            kubectl apply -f ingress/
+            kubectl apply -f ./overlay/
           
             # Delete the key once done
             rm -rf ~/.kube/config
