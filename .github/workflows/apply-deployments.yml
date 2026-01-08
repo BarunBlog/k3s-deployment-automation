@@ -58,7 +58,9 @@ jobs:
 
       - name: SSH into GitHub Runner and deploy manifests
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << EOF # This will allow env variable to the master node
+            
+            export ALB_DNS="${ALB_DNS}"
             
             # Print commands to debug issues
             set -ex
@@ -169,10 +171,15 @@ jobs:
             # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
             # This creates a temporary version of the YAML with the real DNS
             mkdir -p ./overlay
-            if [ -z ${{ env.ALB_DNS }}  ]; then
-              echo "ERROR: ALB_DNS is empty. Skipping ingress update to prevent breakage."
+          
+            if [ -z "$ALB_DNS" ]; then
+              echo "ERROR: ALB_DNS is empty"
               exit 1
             fi
+            
+            for f in ingress/*.yaml; do
+              envsubst '${ALB_DNS}' < "$f" > "./overlay/$(basename "$f")"
+            done
                         
             # Apply Ingresses
             kubectl apply -f ./overlay/
