@@ -124,6 +124,11 @@ jobs:
               -f helm/ingress-nginx/values-prod.yaml
           
             # ----------------------------------- Install or Upgrade Prometheus ----------------------------------------
+            
+            # Add the prometheus repository
+            helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+            helm repo update
+            
             helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
               --namespace monitoring --create-namespace \
               --set prometheus.prometheusSpec.retention=7d \
