@@ -235,6 +235,19 @@ worker_instance_2 = ec2.Instance('worker-instance-2',
 
 worker_instance_ids.append(worker_instance_2.id)
 
+worker_instance_3 = ec2.Instance('worker-instance-3',
+    instance_type=worker_instance_type,
+    ami=ami,
+    subnet_id=private_subnet.id,
+    vpc_security_group_ids=[security_group.id],
+    key_name=key_pair.key_name,
+    tags={
+        'Name': 'Worker Node 3',
+    }
+)
+
+worker_instance_ids.append(worker_instance_3.id)
+
 git_runner_instance = ec2.Instance('git-runner-instance',
     instance_type=runner_instance_type,
     ami=ami,
@@ -297,4 +310,5 @@ pulumi.export('git_runner_public_ip', git_runner_instance.public_ip)
 pulumi.export('master_private_ip', master_instance.private_ip)
 pulumi.export('worker1_private_ip', worker_instance_1.private_ip)
 pulumi.export('worker2_private_ip', worker_instance_2.private_ip)
+pulumi.export('worker3_private_ip', worker_instance_3.private_ip)
 pulumi.export("alb_dns", alb.dns_name)
