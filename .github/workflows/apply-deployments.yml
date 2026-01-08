@@ -58,9 +58,10 @@ jobs:
 
       - name: SSH into GitHub Runner and deploy manifests
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << EOF # This will allow env variable to the master node
-            
-            export ALB_DNS="${ALB_DNS}"
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << EOF
+            export ALB_DNS="${{ env.ALB_DNS }}"
+          
+            echo "ALB_DNS inside SSH is: $ALB_DNS"s
             
             # Print commands to debug issues
             set -ex
