@@ -177,11 +177,10 @@ jobs:
             fi
             
             for f in ingress/*.yaml; do
-              envsubst '${ALB_DNS}' < "$f" > "./overlay/$(basename "$f")"
+              envsubst < "$f" > "./overlay/$(basename "$f")"
             done
-                        
-            # Apply Ingresses
-            sudo kubectl apply -f ./overlay/
+            
+            kubectl apply -f ./overlay/ -R
           
             # Delete the key once done
             rm -rf ~/.kube/config
