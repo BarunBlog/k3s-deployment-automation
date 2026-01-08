@@ -173,6 +173,14 @@ security_group = aws.ec2.SecurityGroup("k3s-instance-sec-grp",
             "security_groups": [alb_security_group.id], # Allow the ALB specifically
             "description": "Allow traffic from ALB to NGINX NodePort",
         },
+        # Allow ALB to Master Traffic
+        {
+            "protocol": "tcp",
+            "from_port": 30090,
+            "to_port": 30090,
+            "security_groups": [alb_security_group.id], # Allow the ALB specifically
+            "description": "Allow traffic from ALB to Master Node",
+        }
     ],
     egress=[{
         "protocol": "-1",
@@ -271,7 +279,7 @@ alb = aws.lb.LoadBalancer(
 
 # ALB Target Group
 target_group = aws.lb.TargetGroup(
-    "k3s-nodeport-alb-tg",
+    "alb-k3s-tg",
     port=30080,           # NodePort of ingress-nginx or service
     protocol="HTTP",
     vpc_id=vpc.id,
@@ -281,7 +289,7 @@ target_group = aws.lb.TargetGroup(
         "protocol": "HTTP",
         "port": "traffic-port",
     },
-    tags={"Name": "k3s-nodeport-alb-tg"},
+    tags={"Name": "alb-k3s-tg"},
 )
 
 # ALB Listener
@@ -303,6 +311,37 @@ for i, instance_id in enumerate(worker_instance_ids):
         target_id=instance_id,
         port=30080,
     )
+
+# Create a Target Group for Prometheus
+prom_target_group = aws.lb.TargetGroup("alb-prom-tg",
+    port=30090, # ALB will hit the port of HELM 30090 port
+    protocol="HTTP",
+    vpc_id=vpc.id,
+    health_check=aws.lb.TargetGroupHealthCheckArgs(
+        path="/-/healthy", # Prometheus health endpoint
+        port="30090",
+    )
+)
+
+# Attach Master Node to this Target Group
+prom_attachment = aws.lb.TargetGroupAttachment("prom-attachment",
+    target_group_arn=prom_target_group.arn,
+    target_id=master_instance.id,
+    port=30090
+)
+
+# Add a Rule to the ALB Listener
+prom_rule = aws.lb.ListenerRule("prom-rule",
+    listener_arn=listener.arn,
+    actions=[aws.lb.ListenerRuleActionArgs(
+        type="forward",
+        target_group_arn=prom_target_group.arn,
+    )],
+    conditions=[aws.lb.ListenerRuleConditionArgs(
+        path_pattern=aws.lb.ListenerRuleConditionPathPatternArgs(
+            values=["/prometheus*"],
+        ),
+    )])
 
 
 # Output the instance IP addresses

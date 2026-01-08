@@ -43,8 +43,11 @@ jobs:
         run: |
           GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
           MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra)
+          ALB_DNS=$(pulumi stack output alb_dns_name --cwd infra)
+          
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV
+          echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -120,12 +123,17 @@ jobs:
               --namespace ingress-nginx --create-namespace \
               -f helm/ingress-nginx/values-prod.yaml
           
-            # Install or Upgrade Prometheus
-            helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-              -n monitoring --create-namespace \
-              -f helm/prometheus/values-prod.yaml
+            # ----------------------------------- Install or Upgrade Prometheus ----------------------------------------
+            helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+              --namespace monitoring --create-namespace \
+              --set prometheus.prometheusSpec.retention=7d \
+              --set prometheus.prometheusSpec.externalUrl="http://${ALB_DNS}/prometheus" \
+              --set prometheus.prometheusSpec.routePrefix="/" \
+              --set prometheus.service.type=NodePort \
+              --set prometheus.service.nodePort=30090 \
+              --wait
           
-            # --- Prometheus Installation end ---
+            # ------------------------------------ Prometheus Installation end -----------------------------------------
 
             # Create namespaces
             kubectl create namespace ${{ secrets.ENVIRONMENT }} --dry-run=client -o yaml | kubectl apply -f -
