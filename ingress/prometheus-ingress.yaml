@@ -15,7 +15,7 @@ spec:
         paths:
           # This captures everything after /prometheus into group $2
           - path: /prometheus(/|$)(.*)
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: prometheus-kube-prometheus-prometheus
