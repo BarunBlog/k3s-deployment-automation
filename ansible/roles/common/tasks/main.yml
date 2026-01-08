@@ -1,3 +1,4 @@
+---
 - name: Update apt cache
   apt:
     update_cache: yes
@@ -10,5 +11,4 @@
       - wget
       - apt-transport-https
       - ca-certificates
-      - gettext-base   # provides envsubst
     state: present
