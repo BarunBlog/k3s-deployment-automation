@@ -59,7 +59,7 @@ jobs:
       - name: SSH into GitHub Runner and deploy manifests
         run: |
          # Pass the variable explicitly as a prefix to the SSH command
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} ALB_DNS="${{ env.ALB_DNS }}" 'bash -s' << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} ALB_DNS="${{ env.ALB_DNS }}" 'bash -s' << EOF
             
             # Print commands to debug issues
             set -ex
