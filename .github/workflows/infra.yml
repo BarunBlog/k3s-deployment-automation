@@ -57,10 +57,12 @@ jobs:
           MASTER_IP=$(pulumi stack output master_private_ip --cwd infra)
           WORKER1_IP=$(pulumi stack output worker1_private_ip --cwd infra)
           WORKER2_IP=$(pulumi stack output worker2_private_ip --cwd infra)
+          WORKER3_IP=$(pulumi stack output worker3_private_ip --cwd infra)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_IP=$MASTER_IP" >> $GITHUB_ENV
           echo "WORKER1_IP=$WORKER1_IP" >> $GITHUB_ENV
           echo "WORKER2_IP=$WORKER2_IP" >> $GITHUB_ENV
+          echo "WORKER3_IP=$WORKER3_IP" >> $GITHUB_ENV
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
