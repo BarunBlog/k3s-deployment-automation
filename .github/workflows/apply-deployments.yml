@@ -169,10 +169,11 @@ jobs:
             # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
             # This creates a temporary version of the YAML with the real DNS
             mkdir -p ./overlay
-            for f in ingress/*.yaml; do
-              envsubst < "$f" > "./overlay/$(basename "$f")"
-            done
-            
+            if [ -z ${{ env.ALB_DNS }}  ]; then
+              echo "ERROR: ALB_DNS is empty. Skipping ingress update to prevent breakage."
+              exit 1
+            fi
+                        
             # Apply Ingresses
             kubectl apply -f ./overlay/
           
