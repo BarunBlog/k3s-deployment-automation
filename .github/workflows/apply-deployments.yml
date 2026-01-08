@@ -164,9 +164,7 @@ jobs:
             kubectl apply -f rabbitmq/
 
             # Apply Services
-            for service in services/*; do
-              kubectl apply -f $service/
-            done
+            kubectl apply -f services/
 
             # --------------------------Set ALB DNS Name to the ingress file dynamically--------------------------------
             # This creates a temporary version of the YAML with the real DNS
@@ -182,7 +180,7 @@ jobs:
             done
                         
             # Apply Ingresses
-            kubectl apply -f ./overlay/
+            sudo kubectl apply -f ./overlay/
           
             # Delete the key once done
             rm -rf ~/.kube/config
