@@ -16,3 +16,10 @@
   shell: "hostname -I | awk '{print $1}'"
   register: master_ip
   changed_when: false
+
+- name: Upload Cluster Info to S3 for Autoscaler
+  shell: |
+    echo "{{ master_ip.stdout }}|{{ k3s_token.stdout }}" > /tmp/cluster_info
+    aws s3 cp /tmp/cluster_info s3://{{ bucket_name }}/cluster_info
+  vars:
+    bucket_name: "k3s-s3-bucket-{{ lookup('env', 'AWS_ACCOUNT_ID') }}"
