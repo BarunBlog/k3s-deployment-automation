@@ -1,4 +1,6 @@
 import os
+import json
+import base64
 import pulumi
 import pulumi_aws as aws
 import pulumi_aws.ec2 as ec2
@@ -11,6 +13,49 @@ worker_instance_type = 't3.medium'
 runner_instance_type = 't3.medium'
 
 ami = "ami-060e277c0d4cce553"
+
+# Creating an s3 bucket
+account_id = aws.get_caller_identity().account_id
+bucket_name = f"k3s-s3-bucket-{account_id}" # unique s3 bucket name
+s3_bucket = aws.s3.BucketV2("k3s-bucket",
+    bucket=bucket_name
+)
+
+# Create the IAM Role to allow nodes to access the bucket
+cluster_node_role = aws.iam.Role(
+    "k3s-node-role",
+    assume_role_policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Action": "sts:AssumeRole",
+            "Principal": {"Service": "ec2.amazonaws.com"},
+            "Effect": "Allow",
+        }]
+    })
+)
+
+# Define the Policy (Allows Put and Get for the bucket)
+node_s3_policy = aws.iam.RolePolicy("node-s3-policy",
+    role=cluster_node_role.id,
+    policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket"],
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ]
+            }
+        ]
+    })
+)
+
+# Create the Instance Profile (The "ID Badge" EC2 actually wears)
+cluster_instance_profile = aws.iam.InstanceProfile("k3s-instance-profile",
+    role=cluster_node_role.name
+)
 
 # Create a VPC
 vpc = ec2.Vpc(
@@ -210,6 +255,7 @@ master_instance = ec2.Instance(
     subnet_id=private_subnet.id,
     vpc_security_group_ids=[security_group.id],
     key_name=key_pair.key_name,
+    iam_instance_profile=cluster_instance_profile.name, # To access s3 bucket
     tags={
         'Name': 'Master Node',
     }
@@ -333,6 +379,7 @@ prom_attachment = aws.lb.TargetGroupAttachment("prom-attachment",
 # Add a Rule to the ALB Listener
 prom_rule = aws.lb.ListenerRule("prom-rule",
     listener_arn=listener.arn,
+    priority=10,
     actions=[aws.lb.ListenerRuleActionArgs(
         type="forward",
         target_group_arn=prom_target_group.arn,
@@ -341,8 +388,104 @@ prom_rule = aws.lb.ListenerRule("prom-rule",
         path_pattern=aws.lb.ListenerRuleConditionPathPatternArgs(
             values=["/prometheus*"],
         ),
-    )])
+    )]
+)
 
+# Read the file from the scripts directory
+script_path = os.path.join(os.getcwd(), 'scripts/join-cluster.sh')
+with open(script_path, 'r') as f:
+    user_data_script = f.read()
+
+
+# Encoding it for the AWS Launch Template
+worker_user_data_base64 = base64.b64encode(user_data_script.encode('utf-8')).decode('utf-8')
+
+# Create a launch Template (The Blueprints for the worker nodes)
+worker_launch_template = aws.ec2.LaunchTemplate(
+    "worker-lt",
+    image_id=ami,
+    instance_type=worker_instance_type,
+    key_name=key_pair.key_name,
+    vpc_security_group_ids=[security_group.id], # worker security group
+    iam_instance_profile={
+        "name": cluster_instance_profile.name
+    },
+    user_data=worker_user_data_base64,
+)
+
+# Create the Auto Scaling Group
+worker_asg = aws.autoscaling.Group("worker-asg",
+    vpc_zone_identifiers=[private_subnet.id], # private subnets
+    launch_template={
+        "id": worker_launch_template.id,
+        "version": "$Latest",
+    },
+    min_size=1, # Scale down to min 1 instance
+    max_size=5, # Scale up to max 5 instances
+    desired_capacity=1, # TODO: delete all worker instance and just increment it to three
+    tags=[{
+        "key": "Name",
+        "value": "k3s-worker-node",
+        "propagate_at_launch": True,
+    }]
+)
+
+# Create DynamoDB to prevent multiple scaling events from happening at once
+scaling_table = aws.dynamodb.Table(
+    "scaling-state",
+    attributes=[{"name": "LockID", "type": "S"}],
+    hash_key="LockID",
+    billing_mode="PAY_PER_REQUEST",
+)
+
+
+# IAM Role for AWS Lambda
+lambda_role = aws.iam.Role(
+    "lambda-exec-role",
+    assume_role_policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Action": "sts:AssumeRole",
+            "Principal": {"Service": "lambda.amazonaws.com"},
+            "Effect": "Allow",
+        }]
+    })
+)
+
+# Attach permissions to the Role
+# Allows Lambda to log to CloudWatch, read DynamoDB, and update ASG
+role_policy = aws.iam.RolePolicy("lambda-scaling-policy",
+    role=lambda_role.id,
+    policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": ["logs:*", "dynamodb:*", "autoscaling:*", "ec2:DescribeInstances"],
+                "Resource": "*"
+            }
+        ]
+    })
+)
+
+# Creating The Lambda Function
+scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
+    role=lambda_role.arn,
+    runtime="python3.11",
+    handler="main.handler", # The auto-scaling repo must use this filename/function
+    # This creates a dummy 'main.py' so Pulumi can finish without the local files
+    code=pulumi.AssetArchive({
+        "main.py": pulumi.StringAsset("def handler(event, context): print('Placeholder code')")
+    }),
+    environment={
+        "variables": {
+            "PROMETHEUS_URL": f"http://{alb.dns_name}/prometheus",
+            "BUCKET_NAME": bucket_name,
+            "DYNAMO_TABLE": scaling_table.name,
+            "ASG_NAME": worker_asg.name
+        }
+    }
+)
 
 # Output the instance IP addresses
 pulumi.export('git_runner_public_ip', git_runner_instance.public_ip)
@@ -351,3 +494,5 @@ pulumi.export('worker1_private_ip', worker_instance_1.private_ip)
 pulumi.export('worker2_private_ip', worker_instance_2.private_ip)
 pulumi.export('worker3_private_ip', worker_instance_3.private_ip)
 pulumi.export("alb_dns", alb.dns_name)
+pulumi.export("dynamo_table", scaling_table.name)
+pulumi.export("token_bucket", s3_bucket.id)
