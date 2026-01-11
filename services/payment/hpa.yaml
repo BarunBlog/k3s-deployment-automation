@@ -1,0 +1,39 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: payment-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-service
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70 # Start scaling pods when CPU usage hits 70%
+
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80 # Start scaling pods when Memory usage hits 80%
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0  # scale-up instantly when a spike detected
+      policies:
+        - type: Pods
+          value: 1  # Add exactly 1 pods
+          periodSeconds: 45 # Wait 45s before assessing if we need more
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Wait longer (5m) before scaling down payments
+      policies:
+        - type: Percent
+          value: 50 # remove only the 50% of the current pods at a time
+          periodSeconds: 60 # It must wait at least 60 seconds between each scale-down event.
