@@ -392,7 +392,7 @@ prom_rule = aws.lb.ListenerRule("prom-rule",
 )
 
 # Read the file from the scripts directory
-script_path = os.path.join(os.getcwd(), 'scripts/join-cluster.sh')
+script_path = os.path.join(os.getcwd(), 'scripts/join_cluster.sh')
 with open(script_path, 'r') as f:
     user_data_script = f.read()
 
