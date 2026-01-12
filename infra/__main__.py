@@ -420,7 +420,7 @@ worker_asg = aws.autoscaling.Group("worker-asg",
         "id": worker_launch_template.id,
         "version": "$Latest",
     },
-    min_size=1, # Scale down to min 1 instance
+    min_size=2, # Scale down to min 2 instances
     max_size=5, # Scale up to max 5 instances
     desired_capacity=1, # TODO: delete all worker instance and just increment it to three
     tags=[{
