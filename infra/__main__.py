@@ -18,8 +18,7 @@ MAX_NODES = 5
 ami = "ami-060e277c0d4cce553"
 
 # Creating an s3 bucket
-bucket_name = "k3s-s3-bucket"
-s3_bucket = aws.s3.Bucket(bucket_name)
+s3_bucket = aws.s3.Bucket("k3s-storage-bucket")
 
 # Create the IAM Role to allow nodes to access the bucket
 cluster_node_role = aws.iam.Role(
@@ -37,19 +36,19 @@ cluster_node_role = aws.iam.Role(
 # Define the Policy (Allows Put and Get for the bucket)
 node_s3_policy = aws.iam.RolePolicy("node-s3-policy",
     role=cluster_node_role.id,
-    policy=json.dumps({
+    policy=s3_bucket.arn.apply(lambda arn: json.dumps({
         "Version": "2012-10-17",
         "Statement": [
             {
                 "Effect": "Allow",
                 "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket"],
                 "Resource": [
-                    f"arn:aws:s3:::{bucket_name}",
-                    f"arn:aws:s3:::{bucket_name}/*"
+                    f"{arn}",      # The bucket itself
+                    f"{arn}/*"     # The objects inside
                 ]
             }
         ]
-    })
+    }))
 )
 
 # Create the Instance Profile (The "ID Badge" EC2 actually wears)
@@ -480,7 +479,7 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
     environment={
         "variables": {
             "PROMETHEUS_URL": f"http://{alb.dns_name}/prometheus",
-            "BUCKET_NAME": bucket_name,
+            "BUCKET_NAME": s3_bucket.id,
             "DYNAMO_TABLE": scaling_table.name,
             "ASG_NAME": worker_asg.name,
             "MIN_NODES": MIN_NODES,
