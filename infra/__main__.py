@@ -12,14 +12,14 @@ master_instance_type = 't3.medium'
 worker_instance_type = 't3.medium'
 runner_instance_type = 't3.medium'
 
+MIN_NODES = 2
+MAX_NODES = 5
+
 ami = "ami-060e277c0d4cce553"
 
 # Creating an s3 bucket
-account_id = aws.get_caller_identity().account_id
-bucket_name = f"k3s-s3-bucket-{account_id}" # unique s3 bucket name
-s3_bucket = aws.s3.BucketV2("k3s-bucket",
-    bucket=bucket_name
-)
+bucket_name = "k3s-s3-bucket"
+s3_bucket = aws.s3.Bucket(bucket_name)
 
 # Create the IAM Role to allow nodes to access the bucket
 cluster_node_role = aws.iam.Role(
@@ -420,8 +420,8 @@ worker_asg = aws.autoscaling.Group("worker-asg",
         "id": worker_launch_template.id,
         "version": "$Latest",
     },
-    min_size=2, # Scale down to min 2 instances
-    max_size=5, # Scale up to max 5 instances
+    min_size=MIN_NODES, # Scale down to min 2 instances
+    max_size=MAX_NODES, # Scale up to max 5 instances
     desired_capacity=1, # TODO: delete all worker instance and just increment it to three
     tags=[{
         "key": "Name",
@@ -482,7 +482,9 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
             "PROMETHEUS_URL": f"http://{alb.dns_name}/prometheus",
             "BUCKET_NAME": bucket_name,
             "DYNAMO_TABLE": scaling_table.name,
-            "ASG_NAME": worker_asg.name
+            "ASG_NAME": worker_asg.name,
+            "MIN_NODES": MIN_NODES,
+            "MAX_NODES": MAX_NODES,
         }
     }
 )
