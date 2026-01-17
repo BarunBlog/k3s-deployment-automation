@@ -260,47 +260,6 @@ master_instance = ec2.Instance(
     }
 )
 
-worker_instance_ids = []
-
-worker_instance_1 = ec2.Instance('worker-instance-1',
-    instance_type=worker_instance_type,
-    ami=ami,
-    subnet_id=private_subnet.id,
-    vpc_security_group_ids=[security_group.id],
-    key_name=key_pair.key_name,
-    tags={
-        'Name': 'Worker Node 1',
-    }
-)
-
-worker_instance_ids.append(worker_instance_1.id)
-
-worker_instance_2 = ec2.Instance('worker-instance-2',
-    instance_type=worker_instance_type,
-    ami=ami,
-    subnet_id=private_subnet.id,
-    vpc_security_group_ids=[security_group.id],
-    key_name=key_pair.key_name,
-    tags={
-        'Name': 'Worker Node 2',
-    }
-)
-
-worker_instance_ids.append(worker_instance_2.id)
-
-worker_instance_3 = ec2.Instance('worker-instance-3',
-    instance_type=worker_instance_type,
-    ami=ami,
-    subnet_id=private_subnet.id,
-    vpc_security_group_ids=[security_group.id],
-    key_name=key_pair.key_name,
-    tags={
-        'Name': 'Worker Node 3',
-    }
-)
-
-worker_instance_ids.append(worker_instance_3.id)
-
 git_runner_instance = ec2.Instance('git-runner-instance',
     instance_type=runner_instance_type,
     ami=ami,
@@ -348,15 +307,6 @@ listener = aws.lb.Listener("http-alb-listener",
     )],
 )
 
-# Attach Worker Nodes
-for i, instance_id in enumerate(worker_instance_ids):
-    aws.lb.TargetGroupAttachment(
-        f"worker-{i}",
-        target_group_arn=target_group.arn,
-        target_id=instance_id,
-        port=30080,
-    )
-
 # Create a Target Group for Prometheus
 prom_target_group = aws.lb.TargetGroup("alb-prom-tg",
     port=30090, # ALB will hit the port of HELM 30090 port
@@ -397,7 +347,11 @@ with open(script_path, 'r') as f:
 
 
 # Encoding it for the AWS Launch Template
-worker_user_data_base64 = base64.b64encode(user_data_script.encode('utf-8')).decode('utf-8')
+worker_user_data = s3_bucket.id.apply(
+    lambda name: base64.b64encode(
+        f"#!/bin/bash\nexport S3_BUCKET_NAME={name}\n{user_data_script}".encode('utf-8')
+    ).decode('utf-8')
+)
 
 # Create a launch Template (The Blueprints for the worker nodes)
 worker_launch_template = aws.ec2.LaunchTemplate(
@@ -409,7 +363,7 @@ worker_launch_template = aws.ec2.LaunchTemplate(
     iam_instance_profile={
         "name": cluster_instance_profile.name
     },
-    user_data=worker_user_data_base64,
+    user_data=worker_user_data,
 )
 
 # Create the Auto Scaling Group
@@ -421,7 +375,10 @@ worker_asg = aws.autoscaling.Group("worker-asg",
     },
     min_size=MIN_NODES, # Scale down to min 2 instances
     max_size=MAX_NODES, # Scale up to max 5 instances
-    desired_capacity=3, # TODO: delete all worker instance and just increment it to three
+    desired_capacity=3,
+    target_group_arns=[target_group.arn],
+    health_check_type="ELB",
+    health_check_grace_period=300,
     tags=[{
         "key": "Name",
         "value": "k3s-worker-node",
@@ -491,9 +448,6 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
 # Output the instance IP addresses
 pulumi.export('git_runner_public_ip', git_runner_instance.public_ip)
 pulumi.export('master_private_ip', master_instance.private_ip)
-pulumi.export('worker1_private_ip', worker_instance_1.private_ip)
-pulumi.export('worker2_private_ip', worker_instance_2.private_ip)
-pulumi.export('worker3_private_ip', worker_instance_3.private_ip)
 pulumi.export("alb_dns", alb.dns_name)
 pulumi.export("dynamo_table", scaling_table.name)
 pulumi.export("token_bucket", s3_bucket.id)

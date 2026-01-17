@@ -3,18 +3,14 @@
 apt-get update -y
 apt-get install -y curl wget apt-transport-https ca-certificates awscli
 
-# Get AWS Account ID to find the bucket
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="k3s-s3-bucket-$ACCOUNT_ID"
-
-# Wait for the Master's Ansible playbook to finish the "Dead Drop"
-while ! aws s3 ls s3://$BUCKET_NAME/cluster_info; do
-  echo "Waiting for cluster info..."
+# Wait for the Master install aws cli and to upload info
+while ! /usr/local/bin/aws s3 ls s3://$BUCKET_NAME/cluster_info; do
+  echo "Waiting for cluster info in $BUCKET_NAME..."
   sleep 10
 done
 
-# Download Master IP and Token
-INFO=$(aws s3 cp s3://$BUCKET_NAME/cluster_info -)
+# Download Info
+INFO=$(/usr/local/bin/aws s3 cp s3://$BUCKET_NAME/cluster_info -)
 MASTER_IP=$(echo $INFO | cut -d'|' -f1)
 K3S_TOKEN=$(echo $INFO | cut -d'|' -f2)
 

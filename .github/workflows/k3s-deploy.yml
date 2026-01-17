@@ -39,16 +39,10 @@ jobs:
         run: |
           GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
           MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra)
-          WORKER_NODE1_IP=$(pulumi stack output worker1_private_ip --cwd infra)
-          WORKER_NODE2_IP=$(pulumi stack output worker2_private_ip --cwd infra)
-          WORKER_NODE3_IP=$(pulumi stack output worker3_private_ip --cwd infra)
           S3_BUCKET_NAME=$(pulumi stack output token_bucket --cwd infra)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV
-          echo "WORKER_NODE1_IP=$WORKER_NODE1_IP" >> $GITHUB_ENV
-          echo "WORKER_NODE2_IP=$WORKER_NODE2_IP" >> $GITHUB_ENV
-          echo "WORKER_NODE3_IP=$WORKER_NODE3_IP" >> $GITHUB_ENV
           echo "S3_BUCKET_NAME=$S3_BUCKET_NAME" >> $GITHUB_ENV
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -74,9 +68,9 @@ jobs:
 
           # Update inventory file with dynamic IPs
           sed -i "s/^master-node ansible_host=.*/master-node ansible_host=${{ env.MASTER_NODE_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
-          sed -i "s/^worker-node-1 ansible_host=.*/worker-node-1 ansible_host=${{ env.WORKER_NODE1_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
-          sed -i "s/^worker-node-2 ansible_host=.*/worker-node-2 ansible_host=${{ env.WORKER_NODE2_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
-          sed -i "s/^worker-node-3 ansible_host=.*/worker-node-3 ansible_host=${{ env.WORKER_NODE3_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
+#          sed -i "s/^worker-node-1 ansible_host=.*/worker-node-1 ansible_host=${{ env.WORKER_NODE1_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
+#          sed -i "s/^worker-node-2 ansible_host=.*/worker-node-2 ansible_host=${{ env.WORKER_NODE2_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
+#          sed -i "s/^worker-node-3 ansible_host=.*/worker-node-3 ansible_host=${{ env.WORKER_NODE3_IP }}/" /home/ubuntu/ansible/inventory/hosts.ini
           EOF
 
       - name: Run the Ansible playbook

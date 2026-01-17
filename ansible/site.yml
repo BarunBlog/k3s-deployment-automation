@@ -9,8 +9,8 @@
   roles:
     - k3s-master
 
-- hosts: workers
-  become: true
-  roles:
-    - k3s-worker
+#- hosts: workers
+#  become: true
+#  roles:
+#    - k3s-worker
 
