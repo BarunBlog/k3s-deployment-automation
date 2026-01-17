@@ -11,4 +11,5 @@
       - wget
       - apt-transport-https
       - ca-certificates
+      - awscli
     state: present
