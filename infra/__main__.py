@@ -421,7 +421,7 @@ worker_asg = aws.autoscaling.Group("worker-asg",
     },
     min_size=MIN_NODES, # Scale down to min 2 instances
     max_size=MAX_NODES, # Scale up to max 5 instances
-    desired_capacity=1, # TODO: delete all worker instance and just increment it to three
+    desired_capacity=3, # TODO: delete all worker instance and just increment it to three
     tags=[{
         "key": "Name",
         "value": "k3s-worker-node",
@@ -478,7 +478,7 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
     }),
     environment={
         "variables": {
-            "PROMETHEUS_URL": f"http://{alb.dns_name}/prometheus",
+            "PROMETHEUS_URL": alb.dns_name.apply(lambda dns: f"http://{dns}/prometheus"),
             "BUCKET_NAME": s3_bucket.id,
             "DYNAMO_TABLE": scaling_table.name,
             "ASG_NAME": worker_asg.name,
