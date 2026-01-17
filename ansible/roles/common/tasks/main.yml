@@ -11,5 +11,18 @@
       - wget
       - apt-transport-https
       - ca-certificates
-      - awscli
     state: present
+
+- name: Check if AWS CLI is installed
+  command: aws --version
+  register: aws_cli_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Download and Install AWS CLI v2
+  shell: |
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip -o awscliv2.zip
+    sudo ./aws/install --update
+    rm -rf aws awscliv2.zip
+  when: aws_cli_check.rc != 0
