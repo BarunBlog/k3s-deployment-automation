@@ -1,14 +1,9 @@
----
-- name: Update apt cache
-  apt:
-    update_cache: yes
-    force_apt_get: yes
-
 - name: Install necessary dependencies
   apt:
     name:
       - curl
       - wget
+      - unzip
       - apt-transport-https
       - ca-certificates
     state: present
@@ -19,10 +14,20 @@
   ignore_errors: yes
   changed_when: false
 
-- name: Download and Install AWS CLI v2
-  shell: |
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip -o awscliv2.zip
-    sudo ./aws/install --update
-    rm -rf aws awscliv2.zip
+- name: Install AWS CLI v2 if missing
+  block:
+    - name: Download AWS CLI
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+
+    - name: Unarchive AWS CLI
+      unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+
+    - name: Run installer
+      command: /tmp/aws/install --update
+      become: yes
   when: aws_cli_check.rc != 0

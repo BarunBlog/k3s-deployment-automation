@@ -82,9 +82,5 @@ jobs:
       - name: Run the Ansible playbook
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
-          
-          # PASS THE BUCKET NAME TO THE REMOTE SHELL ENVIRONMENT
-          export S3_BUCKET_NAME="${{ env.S3_BUCKET_NAME }}"
-          
-          cd ansible && ansible-playbook -i inventory/hosts.ini site.yml
+          cd ansible && ansible-playbook -i inventory/hosts.ini site.yml -e "s3_bucket_name=${{ env.S3_BUCKET_NAME }}"
           EOF

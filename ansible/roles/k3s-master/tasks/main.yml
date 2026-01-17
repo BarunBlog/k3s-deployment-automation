@@ -20,6 +20,4 @@
 - name: Upload Cluster Info to S3 for Autoscaler
   shell: |
     echo "{{ master_ip.stdout }}|{{ k3s_token.stdout }}" > /tmp/cluster_info
-    aws s3 cp /tmp/cluster_info s3://{{ bucket_name }}/cluster_info
-  vars:
-    bucket_name: "{{ lookup('env', 'S3_BUCKET_NAME') }}"
+    aws s3 cp /tmp/cluster_info "s3://{{ s3_bucket_name }}/cluster_info"
