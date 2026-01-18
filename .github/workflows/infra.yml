@@ -43,13 +43,13 @@ jobs:
 
       - name: Pulumi Sync and Deploy - Common
         run: |
-          pulumi stack select dev --cwd infra/common
+          pulumi stack select dev --create --cwd infra/common
           pulumi refresh --yes --cwd infra/common
           pulumi up --yes --cwd infra/common
 
       - name: Pulumi Sync and Deploy - Master
         run: |
-          pulumi stack select dev --cwd infra/k3s-cluster/master
+          pulumi stack select dev --cwd --create infra/k3s-cluster/master
           pulumi refresh --yes --cwd infra/k3s-cluster/master
           pulumi up --yes --cwd infra/k3s-cluster/master
 
