@@ -30,4 +30,4 @@
     - name: Run installer
       command: /tmp/aws/install --update
       become: yes
-  when: aws_cli_check.rc != 0
+  when: aws_check.rc != 0
