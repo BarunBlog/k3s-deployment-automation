@@ -11,8 +11,8 @@ current_org = pulumi.get_organization()
 current_stack = pulumi.get_stack()
 
 # Get Config variables
-master_instance_type = config.require('master_instance_type')
-runner_instance_type = config.require('runner_instance_type')
+master_instance_type = config.require('master-instance-type')
+runner_instance_type = config.require('runner-instance-type')
 ami = config.require('ami')
 common_project_name = config.require('common-project-name')
 
