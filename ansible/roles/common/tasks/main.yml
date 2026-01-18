@@ -10,9 +10,9 @@
 
 - name: Check if AWS CLI is installed
   command: aws --version
-  register: aws_cli_check
-  ignore_errors: yes
-  changed_when: false
+  register: aws_check
+  failed_when: false  # This prevents the "Fatal" red error message
+  changed_when: false # This prevents it from showing as "Changed" in the recap
 
 - name: Install AWS CLI v2 if missing
   block:
