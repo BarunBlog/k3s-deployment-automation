@@ -1,0 +1,12 @@
+name: k3s-worker-and-asg
+description: Auto Scaler Group, Worker Node Templates
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    # Point this to the root venv
+    virtualenv: ../../venv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

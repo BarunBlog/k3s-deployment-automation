@@ -1,0 +1,12 @@
+name: common-infra
+description: VPC, Subnets, and S3 Bucket for K3s
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    # Point this to the root venv
+    virtualenv: ../venv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

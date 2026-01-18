@@ -2,7 +2,7 @@ name: Apply Kubernetes Manifests
 
 on:
   workflow_run:
-    workflows: ["K3s deployment using Ansible"]
+    workflows: ["Deploy Auto Scaler"]
     types:
       - completed
 
@@ -32,18 +32,18 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: pulumi login
 
-      - name: Pulumi stack select
-        run: pulumi stack select dev --cwd infra
+      - name: Pulumi refresh - Common
+        run: pulumi refresh --yes --cwd infra/common --stack dev
 
-      - name: Pulumi refresh
-        run: pulumi refresh --yes --cwd infra
+      - name: Pulumi refresh - Master
+        run: pulumi refresh --yes --cwd infra/k3s-cluster/master --stack dev
 
       - name: Save Pulumi outputs
         id: pulumi_outputs
         run: |
-          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
-          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra)
-          ALB_DNS=$(pulumi stack output alb_dns --cwd infra)
+          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master)
+          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master)
+          ALB_DNS=$(pulumi stack output alb_dns --cwd infra/k3s-cluster/master)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV

@@ -24,7 +24,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install pulumi pulumi-aws
+          pip install -r requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -41,20 +41,23 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: pulumi login
 
-      - name: Pulumi stack select
-        run: pulumi stack select dev --cwd infra
+      - name: Pulumi Sync and Deploy - Common
+        run: |
+          pulumi stack select dev --cwd infra/common
+          pulumi refresh --yes --cwd infra/common
+          pulumi up --yes --cwd infra/common
 
-      - name: Pulumi refresh
-        run: pulumi refresh --yes --cwd infra
-
-      - name: Pulumi up
-        run: pulumi up --yes --cwd infra
+      - name: Pulumi Sync and Deploy - Master
+        run: |
+          pulumi stack select dev --cwd infra/k3s-cluster/master
+          pulumi refresh --yes --cwd infra/k3s-cluster/master
+          pulumi up --yes --cwd infra/k3s-cluster/master
 
       - name: Save Pulumi outputs
         id: pulumi_outputs
         run: |
-          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra)
-          MASTER_IP=$(pulumi stack output master_private_ip --cwd infra)
+          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master)
+          MASTER_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_IP=$MASTER_IP" >> $GITHUB_ENV

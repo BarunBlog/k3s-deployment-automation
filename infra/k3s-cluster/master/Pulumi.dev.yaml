@@ -1,0 +1,7 @@
+config:
+  aws:region: ap-southeast-1
+  k3s-master:master-instance-type: 't3.medium'
+  k3s-master:runner-instance-type: 't3.medium'
+  k3s-master:ami: "ami-060e277c0d4cce553"
+
+  k3s-master:common-project-name: "common-infra"
