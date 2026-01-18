@@ -8,6 +8,8 @@ on:
     paths:
       - ansible/**
 
+  workflow_dispatch:
+
 jobs:
   setup_runner:
     runs-on: ubuntu-latest
