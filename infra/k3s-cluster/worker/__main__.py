@@ -16,6 +16,8 @@ worker_instance_type = config.require('worker-instance-type')
 ami = config.require('ami')
 common_project_name = config.require('common-project-name')
 master_project_name = config.require('master-project-name')
+min_nodes = int(config.require("min-nodes"))
+max_nodes = int(config.require("max-nodes"))
 
 # Construct the reference string to access exported variables from common project
 common_ref_name = f"{current_org}/{common_project_name}/{current_stack}"
@@ -35,8 +37,6 @@ security_group_id = common_ref.get_output("security_group_id")
 alb_security_group_id = common_ref.get_output("alb_security_group_id")
 cluster_instance_profile_name = common_ref.get_output("cluster_instance_profile_name")
 key_pair_key_name = common_ref.get_output("key_pair_key_name")
-min_nodes = common_ref.get_output("min-nodes")
-max_nodes = common_ref.get_output("max-nodes")
 
 # Now pull outputs from master project
 target_group_arn = master_ref.get_output("target_group_arn")
