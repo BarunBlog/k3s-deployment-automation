@@ -24,9 +24,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install pulumi pulumi-aws
+          python -m venv infra/venv
+          
+          # Call pip directly from the venv folder
+          infra/venv/bin/pip install --upgrade pip
+          infra/venv/bin/pip install -r infra/requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -44,12 +46,16 @@ jobs:
         run: pulumi login
 
       - name: Pulumi Sync and Deploy - Common
+        env:
+          PULUMI_PYTHON_CMD: ../venv/bin/python
         run: |
           pulumi stack select dev --create --cwd infra/common
           pulumi refresh --yes --cwd infra/common
           pulumi up --yes --cwd infra/common
 
       - name: Pulumi Sync and Deploy - Master
+        env:
+          PULUMI_PYTHON_CMD: ../../venv/bin/python
         run: |
           pulumi stack select dev --cwd --create infra/k3s-cluster/master
           pulumi refresh --yes --cwd infra/k3s-cluster/master
