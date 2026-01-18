@@ -43,8 +43,12 @@ target_group_arn = master_ref.get_output("target_group_arn")
 alb_dns_name = master_ref.get_output("alb_dns")
 
 
-# Read the file from the scripts directory
-script_path = os.path.join(os.getcwd(), 'scripts/join_cluster.sh')
+# Get the directory where __main__.py is located
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the script relative to THIS file
+script_path = os.path.join(current_dir, "scripts", "join_cluster.sh")
+
 with open(script_path, 'r') as f:
     user_data_script = f.read()
 
