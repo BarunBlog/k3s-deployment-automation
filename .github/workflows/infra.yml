@@ -26,7 +26,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install -r infra/requirements.txt
+          pip install pulumi pulumi-aws
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
