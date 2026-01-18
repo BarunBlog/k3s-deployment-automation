@@ -37,9 +37,9 @@ jobs:
       - name: Save Pulumi outputs
         id: pulumi_outputs
         run: |
-          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master)
-          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master)
-          S3_BUCKET_NAME=$(pulumi stack output s3_bucket_id --cwd infra/common)
+          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master -s dev)
+          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master -s dev)
+          S3_BUCKET_NAME=$(pulumi stack output s3_bucket_id --cwd infra/common -s dev)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV
