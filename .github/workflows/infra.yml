@@ -57,7 +57,7 @@ jobs:
         env:
           PULUMI_PYTHON_CMD: ../../venv/bin/python
         run: |
-          pulumi stack select dev --cwd --create infra/k3s-cluster/master
+          pulumi stack select dev --create --cwd infra/k3s-cluster/master
           pulumi refresh --yes --cwd infra/k3s-cluster/master
           pulumi up --yes --cwd infra/k3s-cluster/master
 
