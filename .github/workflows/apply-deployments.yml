@@ -56,6 +56,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Transfer Manifests to Git-Runner
+        run: |
+          # Sync the merged k8s-manifests folder to the runner instance
+          scp -o StrictHostKeyChecking=no -r ./k8s-manifests ubuntu@${{ env.GIT_RUNNER_IP }}:~/
+
       - name: SSH into GitHub Runner and deploy manifests
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ env.GIT_RUNNER_IP }} << 'EOF'
@@ -97,15 +102,6 @@ jobs:
             
             # Verify connection
             kubectl get nodes
-            
-            # Create a working directory for infra repo
-            if [ ! -d "ecommerce-kubernetes-infra" ]; then
-              git clone https://github.com/BarunBlog/ecommerce-kubernetes-infra.git
-              cd ecommerce-kubernetes-infra
-            else
-              cd ecommerce-kubernetes-infra
-              git pull
-            fi
 
             # Install Helm if not installed
             if ! command -v helm &> /dev/null
@@ -139,6 +135,9 @@ jobs:
               --wait
           
             # ------------------------------------ Prometheus Installation end -----------------------------------------
+
+            # Change directory to manifests 
+            cd ~/k8s-manifests
 
             # Create namespaces
             kubectl create namespace ${{ secrets.ENVIRONMENT }} --dry-run=client -o yaml | kubectl apply -f -
