@@ -87,7 +87,7 @@ worker_asg = aws.autoscaling.Group("worker-asg",
     max_size=max_nodes, # Scale up to max 5 instances
     desired_capacity=3,
     target_group_arns=[target_group_arn],
-    health_check_type="ELB",
+    health_check_type="EC2",
     health_check_grace_period=600,
     tags=[{
         "key": "Name",

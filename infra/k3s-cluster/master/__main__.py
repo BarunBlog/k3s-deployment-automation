@@ -106,6 +106,10 @@ prom_target_group = aws.lb.TargetGroup("alb-prom-tg",
     health_check=aws.lb.TargetGroupHealthCheckArgs(
         path="/-/healthy", # Prometheus health endpoint
         port="30090",
+        healthy_threshold=2,
+        unhealthy_threshold=10, # Allow 10 failures before marking 'Unhealthy'
+        interval=30,            # Check every 30 seconds
+        timeout=10,
     )
 )
 
