@@ -49,10 +49,11 @@ with open(script_path, 'r') as f:
     user_data_script = f.read()
 
 # Encoding it for the AWS Launch Template
-worker_user_data = pulumi.Output.all(s3_bucket_id).apply(
-    lambda args: user_data_script.replace('REPLACE_ME_BUCKET_NAME', args[0])
+worker_user_data = s3_bucket_id.apply(
+    lambda name: base64.b64encode(
+        user_data_script.replace("REPLACE_ME_BUCKET_NAME", name).encode('utf-8')
+    ).decode('utf-8')
 )
-
 
 # Create a launch Template (The Blueprints for the worker nodes)
 worker_launch_template = aws.ec2.LaunchTemplate(
