@@ -1,18 +1,26 @@
 #!/bin/bash
+
+set -e # Exit immediately if a command fails
+exec > /var/log/k3s-install.log 2>&1 # Log everything to this file for debugging
 # Install dependencies
 apt-get update -y
 apt-get install -y curl wget apt-transport-https ca-certificates awscli
 
-# Wait for the Master install aws cli and to upload info
-while ! /usr/local/bin/aws s3 ls s3://$BUCKET_NAME/cluster_info; do
-  echo "Waiting for cluster info in $BUCKET_NAME..."
+BUCKET_NAME="REPLACE_ME_BUCKET_NAME" # This name will be changed dynamically
+
+# Wait for cluster info
+while ! aws s3 ls s3://$BUCKET_NAME/cluster_info; do
+  echo "Waiting for cluster info..."
   sleep 10
 done
 
-# Download Info
-INFO=$(/usr/local/bin/aws s3 cp s3://$BUCKET_NAME/cluster_info -)
-MASTER_IP=$(echo $INFO | cut -d'|' -f1)
-K3S_TOKEN=$(echo $INFO | cut -d'|' -f2)
+# Download and Parse
+aws s3 cp s3://$BUCKET_NAME/cluster_info /tmp/cluster_info
+MASTER_IP=$(cut -d'|' -f1 /tmp/cluster_info)
+K3S_TOKEN=$(cut -d'|' -f2 /tmp/cluster_info)
 
-# Join the cluster
-curl -sfL https://get.k3s.io | K3S_URL=https://$MASTER_IP:6443 K3S_TOKEN=$K3S_TOKEN sh -
+echo "Master IP: $MASTER_IP"
+echo "Joining cluster..."
+
+# Join command with verbose flag
+curl -sfL https://get.k3s.io | K3S_URL=https://${MASTER_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -s - agent

@@ -29,12 +29,8 @@ master_ref = pulumi.StackReference(master_ref_name)
 
 # Now pull outputs from common project
 s3_bucket_id = common_ref.get_output("s3_bucket_id")
-vpc_id = common_ref.get_output("vpc_id")
-public_subnet_id = common_ref.get_output("public_subnet_id")
-public_subnet_2_id = common_ref.get_output("public_subnet_2_id")
 private_subnet_id = common_ref.get_output("private_subnet_id")
 security_group_id = common_ref.get_output("security_group_id")
-alb_security_group_id = common_ref.get_output("alb_security_group_id")
 cluster_instance_profile_name = common_ref.get_output("cluster_instance_profile_name")
 key_pair_key_name = common_ref.get_output("key_pair_key_name")
 
@@ -53,10 +49,8 @@ with open(script_path, 'r') as f:
     user_data_script = f.read()
 
 # Encoding it for the AWS Launch Template
-worker_user_data = s3_bucket_id.apply(
-    lambda name: base64.b64encode(
-        f"#!/bin/bash\nexport S3_BUCKET_NAME={name}\n{user_data_script}".encode('utf-8')
-    ).decode('utf-8')
+worker_user_data = pulumi.Output.all(s3_bucket_id).apply(
+    lambda args: user_data_script.replace('REPLACE_ME_BUCKET_NAME', args[0])
 )
 
 
