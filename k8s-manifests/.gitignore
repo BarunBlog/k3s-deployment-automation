@@ -1,0 +1,16 @@
+# Ignore system files
+.DS_Store
+*.swp
+*.bak
+.idea
+
+
+# Ignore local kube config or cluster files
+.kube/
+*.kubeconfig
+
+# Ignore sensitive secrets
+secrets/*.yaml
+
+# Ignore any local overrides
+*.local.yaml

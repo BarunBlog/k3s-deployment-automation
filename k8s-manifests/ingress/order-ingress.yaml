@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: order-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.k3s-alb-3c06f2d-1194707239.ap-southeast-1.elb.amazonaws.com
+      http:
+        paths:
+          - path: /order
+            pathType: Prefix
+            backend:
+              service:
+                name: order-service
+                port:
+                  number: 80

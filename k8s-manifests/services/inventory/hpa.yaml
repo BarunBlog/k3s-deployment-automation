@@ -1,0 +1,38 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: inventory-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: inventory-service
+  minReplicas: 2
+  maxReplicas: 8 # Slightly lower than order-service
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0  # scale-up instantly when a spike detected
+      policies:
+        - type: Pods
+          value: 2  # Add exactly 2 pods
+          periodSeconds: 30 # Wait 30s before assessing if we need more
+    scaleDown:
+      stabilizationWindowSeconds: 180 # Wait 3 minutes before scale-down
+      policies:
+        - type: Percent
+          value: 50 # remove only the 50% of the current pods at a time
+          periodSeconds: 60 # It must wait at least 60 seconds between each scale-down event.
