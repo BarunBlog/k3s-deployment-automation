@@ -41,6 +41,11 @@ master_instance = ec2.Instance(
     vpc_security_group_ids=[security_group_id],
     key_name=key_pair_key_name,
     iam_instance_profile=cluster_instance_profile_name, # To access s3 bucket
+    root_block_device=ec2.InstanceRootBlockDeviceArgs(
+        volume_size=25,       # 25GB storage
+        volume_type="gp3",    # gp3 is faster and cheaper than gp2
+        delete_on_termination=True,
+    ),
     tags={
         'Name': 'Master Node',
     }

@@ -65,6 +65,14 @@ worker_launch_template = aws.ec2.LaunchTemplate(
     iam_instance_profile={
         "name": cluster_instance_profile_name
     },
+    block_device_mappings=[aws.ec2.LaunchTemplateBlockDeviceMappingArgs(
+        device_name="/dev/sda1", # for Ubuntu 24.04
+        ebs=aws.ec2.LaunchTemplateBlockDeviceMappingEbsArgs(
+            volume_size=25,
+            volume_type="gp3",
+            delete_on_termination=True,
+        ),
+    )],
     user_data=worker_user_data,
 )
 
@@ -80,7 +88,7 @@ worker_asg = aws.autoscaling.Group("worker-asg",
     desired_capacity=3,
     target_group_arns=[target_group_arn],
     health_check_type="ELB",
-    health_check_grace_period=300,
+    health_check_grace_period=600,
     tags=[{
         "key": "Name",
         "value": "k3s-worker-node",
