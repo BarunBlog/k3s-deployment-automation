@@ -57,8 +57,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {"status": "success", "recommended_capacity": recommended_capacity}
 
     except Exception as e:
-        logger.exception("An unhandled error occurred during the scaling process.")
-        return {"status": "error", "message": str(e)}
+        logger.error(f"Scaling aborted due to safety failure: {e}")
+        return {"status": "error", "message": "Scaling aborted for safety."}
 
     finally:
         state_manager.release_lock()

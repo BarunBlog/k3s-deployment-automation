@@ -19,13 +19,13 @@ class PrometheusClient:
 
             results = data.get('data', {}).get('result', [])
             if not results:
-                return 0
+                raise ValueError(f"No metric data returned for query: {promql_query}")
 
             # The value is usually a list like [timestamp, "value"]
             return float(results[0]['value'][1])
         except Exception as e:
             logger.error(f"Prometheus query failed: {e}")
-            return 0
+            raise
 
     def get_avg_cpu(self):
         """
