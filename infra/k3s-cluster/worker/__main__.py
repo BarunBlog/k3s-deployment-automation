@@ -157,3 +157,4 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
 
 
 pulumi.export("dynamo_table", scaling_table.name)
+pulumi.export("lambda_function_name", scaling_lambda.name)
