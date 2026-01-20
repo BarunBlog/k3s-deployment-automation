@@ -50,8 +50,3 @@ jobs:
           pulumi stack select dev --create --cwd infra/k3s-cluster/worker
           pulumi refresh --yes --cwd infra/k3s-cluster/worker
           pulumi up --yes --cwd infra/k3s-cluster/worker
-
-  apply-manifests:
-    needs: deploy-autoscaler
-    uses: ./.github/workflows/apply-deployments.yml
-    secrets: inherit
