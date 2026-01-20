@@ -54,6 +54,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Inject ALB DNS into Manifests
+        run: |
+          # Use sed to replace the placeholder in all ingress files inside the directory
+          find ./k8s-manifests/ingress -type f -name "*.yaml" -exec sed -i "s/{{ alb_dns_name }}/${{ env.ALB_DNS }}/g" {} +
+          
+          # Verify replacement (optional debug)
+          echo "Verifying DNS injection in prometheus-ingress.yaml:"
+          grep "host:" ./k8s-manifests/ingress/prometheus-ingress.yaml
+
       - name: Transfer Manifests to Git-Runner
         run: |
           # Sync the merged k8s-manifests folder to the runner instance

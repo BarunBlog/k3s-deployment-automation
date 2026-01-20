@@ -3,13 +3,15 @@ kind: Ingress
 metadata:
   name: prometheus-ingress
   namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-    - host: prometheus.k3s-alb-3c06f2d-1194707239.ap-southeast-1.elb.amazonaws.com
+    - host: {{ alb_dns_name }}
       http:
         paths:
-          - path: /
+          - path: /prometheus
             pathType: Prefix
             backend:
               service:

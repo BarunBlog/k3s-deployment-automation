@@ -2,14 +2,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: rabbitmq-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true" # Enable Regex
 spec:
   ingressClassName: nginx
   rules:
-    - host: rabbitmq.k3s-alb-3c06f2d-1194707239.ap-southeast-1.elb.amazonaws.com
+    - host: {{ alb_dns_name }}
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /rabbitmq(/|$)(.*)  # Capture everything after /rabbitmq
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: rabbitmq-service
