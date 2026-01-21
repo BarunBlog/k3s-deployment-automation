@@ -33,6 +33,7 @@ private_subnet_id = common_ref.get_output("private_subnet_id")
 security_group_id = common_ref.get_output("security_group_id")
 cluster_instance_profile_name = common_ref.get_output("cluster_instance_profile_name")
 key_pair_key_name = common_ref.get_output("key_pair_key_name")
+cluster_node_role_name = common_ref.get_output("cluster_node_role_name")
 
 # Now pull outputs from master project
 target_group_arn = master_ref.get_output("target_group_arn")
@@ -188,7 +189,7 @@ ebs_csi_policy = aws.iam.Policy(
 
 aws.iam.RolePolicyAttachment(
     "attach-ebs-csi",
-    role=cluster_instance_profile_name,
+    role=cluster_node_role_name,
     policy_arn=ebs_csi_policy.arn
 )
 

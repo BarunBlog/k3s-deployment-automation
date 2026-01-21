@@ -244,6 +244,7 @@ pulumi.export('private_subnet_id', private_subnet.id)
 
 pulumi.export('security_group_id', security_group.id)
 pulumi.export('alb_security_group_id', alb_security_group.id)
+pulumi.export("cluster_node_role_name", cluster_node_role.name)
 pulumi.export('cluster_instance_profile_name', cluster_instance_profile.name)
 
 pulumi.export('key_pair_key_name', key_pair.key_name)
