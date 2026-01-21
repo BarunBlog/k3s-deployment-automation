@@ -53,7 +53,7 @@ jobs:
           
           # Save the kubeconfig into a variable
           # Hop through Git-runner to reach the Master Private IP
-          KUBEDATA=$(ssh -o StrictHostKeyChecking=no ubuntu@$GIT_RUNNER_IP \
+          KUBEDATA=$(ssh -o StrictHostKeyChecking=no -A ubuntu@$GIT_RUNNER_IP \
             "ssh -o StrictHostKeyChecking=no ubuntu@$MASTER_NODE_IP 'sudo cat /etc/rancher/k3s/k3s.yaml'")
           
           # Clean the config (replace 127.0.0.1 with the Master Private IP)
