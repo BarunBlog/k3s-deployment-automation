@@ -2,7 +2,7 @@ name: Apply Kubernetes Manifests
 
 on:
   workflow_run:
-    workflows: ["K3s deployment using Ansible"]
+    workflows: [ "Deploy Auto Scaler" ]
     types:
       - completed
 
