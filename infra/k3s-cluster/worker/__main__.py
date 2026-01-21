@@ -155,6 +155,44 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
     }
 )
 
+# Policy required by EBS CSI
+ebs_csi_policy = aws.iam.Policy(
+    "AmazonEBSCSIDriverPolicy",
+    policy={
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ec2:AttachVolume",
+                    "ec2:CreateSnapshot",
+                    "ec2:CreateTags",
+                    "ec2:CreateVolume",
+                    "ec2:DeleteSnapshot",
+                    "ec2:DeleteTags",
+                    "ec2:DeleteVolume",
+                    "ec2:DescribeAvailabilityZones",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeSnapshots",
+                    "ec2:DescribeTags",
+                    "ec2:DescribeVolumes",
+                    "ec2:DescribeVolumesModifications",
+                    "ec2:DetachVolume",
+                    "ec2:ModifyVolume"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+)
+
+aws.iam.RolePolicyAttachment(
+    "attach-ebs-csi",
+    role=cluster_instance_profile_name,
+    policy_arn=ebs_csi_policy.arn
+)
+
 
 pulumi.export("dynamo_table", scaling_table.name)
 pulumi.export("lambda_function_name", scaling_lambda.name)
+pulumi.export("ebs_csi_policy_arn", ebs_csi_policy.arn)

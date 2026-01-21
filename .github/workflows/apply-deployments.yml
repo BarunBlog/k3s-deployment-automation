@@ -163,6 +163,18 @@ jobs:
               --from-literal=RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }} \
               --dry-run=client -o yaml | kubectl apply -f -
             
+            # install EBS CSI driver using HELM
+            helm repo add aws-ebs-csi-driver \
+              https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+            
+            helm upgrade --install aws-ebs-csi-driver \
+              aws-ebs-csi-driver/aws-ebs-csi-driver \
+              --namespace kube-system \
+              --set controller.region=ap-southeast-1 \
+              --wait
+          
+            # Creating the Storage class to store data from rabbitmq
+            kubectl apply -f storage/
 
             # Apply RabbitMQ
             kubectl apply -f rabbitmq/
