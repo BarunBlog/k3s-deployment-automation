@@ -5,6 +5,7 @@ metadata:
 spec:
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: ebs-sc # class name must be same as pulumi ebs class name

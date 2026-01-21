@@ -1,0 +1,4 @@
+prometheus:
+  prometheusSpec:
+    routePrefix: /
+    externalUrl: http://{{ alb_dns_name }}/prometheus
