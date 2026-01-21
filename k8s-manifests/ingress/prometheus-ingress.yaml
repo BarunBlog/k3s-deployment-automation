@@ -3,10 +3,7 @@ kind: Ingress
 metadata:
   name: prometheus-ingress
   namespace: monitoring
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
   rules:
     - host: {{ alb_dns_name }}
       http:
