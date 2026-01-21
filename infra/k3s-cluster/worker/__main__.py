@@ -3,9 +3,6 @@ import json
 import pulumi
 import base64
 import pulumi_aws as aws
-import pulumi_kubernetes as k8s # Added this for Helm
-
-kube_content = os.getenv("KUBECONFIG_CONTENT")
 
 # Initialize the configuration object
 config = pulumi.Config()
@@ -158,48 +155,6 @@ scaling_lambda = aws.lambda_.Function("cluster-autoscaler",
     }
 )
 
-# Attach EBS CSI policy to Worker Nodes
-# This gives EC2 workers permission to create/attach EBS volumes.
-ebs_csi_policy_attachment = aws.iam.RolePolicyAttachment("ebs-csi-policy-attach",
-    role=cluster_instance_profile_name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-)
-
-# A K8s provider to talk to the K3s cluster
-if kube_content:
-    # Initialize the provider using the raw string
-    k8s_provider = k8s.Provider("k3s-provider", kubeconfig=kube_content)
-else:
-    # Fallback for local dev
-    k8s_provider = k8s.Provider("k3s-provider")
-
-ebs_csi_driver = k8s.helm.v3.Chart("aws-ebs-csi-driver",
-    k8s.helm.v3.ChartOpts(
-        chart="aws-ebs-csi-driver",
-        version="2.26.0",
-        namespace="kube-system",
-        fetch_opts=k8s.helm.v3.FetchOpts(
-            repo="https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
-        ),
-        # Must wait for IAM permissions to be active before the pods try to start
-    ), opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ebs_csi_policy_attachment])
-)
-
-# Creating the Storage Class
-# This is what the PVC will point to (storageClassName: ebs-sc)
-ebs_storage_class = k8s.storage.v1.StorageClass("ebs-sc",
-    metadata=k8s.meta.v1.ObjectMetaArgs(
-        name="ebs-sc",
-    ),
-    provisioner="ebs.csi.aws.com",
-    reclaim_policy="Delete",
-    volume_binding_mode="WaitForFirstConsumer", # Best for multi-AZ clusters
-    parameters={
-        "type": "gp3",
-        "fsType": "ext4",
-    }, opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ebs_csi_driver])
-)
 
 pulumi.export("dynamo_table", scaling_table.name)
 pulumi.export("lambda_function_name", scaling_lambda.name)
-pulumi.export("storage_class_name", ebs_storage_class.metadata.apply(lambda m: m.name))

@@ -1,7 +1,0 @@
-controller:
-  service:
-    type: NodePort
-    nodePorts:
-      http: 30080
-  admissionWebhooks:
-    enabled: false
