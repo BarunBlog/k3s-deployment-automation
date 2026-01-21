@@ -5,6 +5,8 @@ import base64
 import pulumi_aws as aws
 import pulumi_kubernetes as k8s # Added this for Helm
 
+kube_content = os.getenv("KUBECONFIG_CONTENT")
+
 # Initialize the configuration object
 config = pulumi.Config()
 
@@ -164,7 +166,12 @@ ebs_csi_policy_attachment = aws.iam.RolePolicyAttachment("ebs-csi-policy-attach"
 )
 
 # A K8s provider to talk to the K3s cluster
-k8s_provider = k8s.Provider("k3s-provider", kubeconfig=config.require("kubeconfig"))
+if kube_content:
+    # Initialize the provider using the raw string
+    k8s_provider = k8s.Provider("k3s-provider", kubeconfig=kube_content)
+else:
+    # Fallback for local dev
+    k8s_provider = k8s.Provider("k3s-provider")
 
 ebs_csi_driver = k8s.helm.v3.Chart("aws-ebs-csi-driver",
     k8s.helm.v3.ChartOpts(

@@ -46,7 +46,19 @@ jobs:
       - name: Pulumi Sync and Deploy - Autoscaler
         env:
           PULUMI_PYTHON_CMD: ../../venv/bin/python
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
+          GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master -s dev)
+          MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master -s dev)
+          
+          # Save the kubeconfig into a variable
+          # Hop through Git-runner to reach the Master Private IP
+          KUBEDATA=$(ssh -o StrictHostKeyChecking=no ubuntu@$GIT_RUNNER_IP \
+            "ssh -o StrictHostKeyChecking=no ubuntu@$MASTER_NODE_IP 'sudo cat /etc/rancher/k3s/k3s.yaml'")
+          
+          # Clean the config (replace 127.0.0.1 with the Master Private IP)
+          export KUBECONFIG_CONTENT=$(echo "$KUBEDATA" | sed "s/127.0.0.1/$MASTER_NODE_IP/g")
+          
           pulumi stack select dev --create --cwd infra/k3s-cluster/worker
           pulumi refresh --yes --cwd infra/k3s-cluster/worker
           pulumi up --yes --cwd infra/k3s-cluster/worker
