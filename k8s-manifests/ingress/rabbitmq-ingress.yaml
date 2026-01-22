@@ -3,15 +3,14 @@ kind: Ingress
 metadata:
   name: rabbitmq-ingress
   annotations:
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      rewrite ^/rabbitmq$ /rabbitmq/ permanent;
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
     - host: {{ alb_dns_name }}
       http:
         paths:
-          - path: /rabbitmq
+          - path: /
             pathType: Prefix
             backend:
               service:
