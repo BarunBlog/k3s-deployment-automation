@@ -43,12 +43,10 @@ spec:
               value: "/rabbitmq"
 
           readinessProbe:
-            httpGet:
-              path: /rabbitmq/api/health/started # Health check endpoint for rabbitmq
-              port: 15672
+            tcpSocket:
+              port: 5672
             initialDelaySeconds: 20
             periodSeconds: 5
-            timeoutSeconds: 3
 
           livenessProbe:
             tcpSocket:
