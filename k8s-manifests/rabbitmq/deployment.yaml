@@ -44,7 +44,7 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /api/health/started # Health check endpoint for rabbitmq
+              path: /rabbitmq/api/health/started # Health check endpoint for rabbitmq
               port: 15672
             initialDelaySeconds: 20
             periodSeconds: 5
