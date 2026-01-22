@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rabbitmq-pdb
+spec:
+  minAvailable: 1 # PDB says to k8s I need min 1 available pod before scaling down
+  selector:
+    matchLabels:
+      app: rabbitmq

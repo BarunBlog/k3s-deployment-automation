@@ -8,6 +8,12 @@ spec:
     matchLabels:
       app: payment-app
 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1 # Start 1 new pod before killing the old one (Create the new pod first)
+      maxUnavailable: 0 # Never allow more than 0 pod to be down (DO NOT kill the old pod until the new one is 'Ready')
+
   template:
     metadata:
       labels:

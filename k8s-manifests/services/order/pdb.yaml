@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PDBs
+items:
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: order-service-pdb
+    spec:
+      minAvailable: 1 # PDB says to k8s I need min 1 available pod before scaling down
+      selector:
+        matchLabels:
+          app: order-service

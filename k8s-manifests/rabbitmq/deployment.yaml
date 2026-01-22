@@ -8,8 +8,13 @@ spec:
   selector:
     matchLabels:
       app: rabbitmq
+
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1 # Start 1 new pod before killing the old one (Create the new pod first)
+      maxUnavailable: 0 # Never allow more than 0 pod to be down (DO NOT kill the old pod until the new one is 'Ready')
+
   template:
     metadata:
       labels:
@@ -38,10 +43,12 @@ spec:
               value: "/rabbitmq"
 
           readinessProbe:
-            tcpSocket:
-              port: 5672
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            httpGet:
+              path: /api/health/started # Health check endpoint for rabbitmq
+              port: 15672
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
 
           livenessProbe:
             tcpSocket:
