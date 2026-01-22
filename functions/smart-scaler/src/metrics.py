@@ -17,9 +17,16 @@ class PrometheusClient:
             response.raise_for_status()
             data = response.json()
 
+            status = data.get('status')
+            if status != 'success':
+                error_type = data.get('errorType', 'UnknownError')
+                error_msg = data.get('error', 'No error message provided')
+                raise ValueError(f"Prometheus API returned error ({error_type}): {error_msg}")
+
             results = data.get('data', {}).get('result', [])
             if not results:
-                raise ValueError(f"No metric data returned for query: {promql_query}")
+                logger.info(f"Query returned no data points: {promql_query}. Interpreting as 0.")
+                return 0.0
 
             # The value is usually a list like [timestamp, "value"]
             return float(results[0]['value'][1])
