@@ -34,6 +34,9 @@ spec:
                   name: rabbitmq-secret
                   key: RABBITMQ_DEFAULT_PASS
 
+            - name: RABBITMQ_MANAGEMENT_PATH_PREFIX
+              value: "/rabbitmq"
+
           readinessProbe:
             tcpSocket:
               port: 5672
