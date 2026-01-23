@@ -7,11 +7,10 @@ spec:
   image: rabbitmq:4.1.0-management-alpine
 
   # This tells the operator to use existing secret instead of generating one
-  auth:
-    defaultUserSecret:
+  defaultUser:
+    secretReference:
       name: rabbitmq-secret
 
-  # Link the existing secret for credentials
   rabbitmq:
     additionalConfig: |
       management_path_prefix = /rabbitmq
