@@ -7,8 +7,9 @@ spec:
   image: rabbitmq:4.1.0-management-alpine
 
   # This tells the operator to use existing secret instead of generating one
-  secret:
-    secretName: rabbitmq-secret
+  override:
+    secrets:
+      - rabbitmq-secret
 
   rabbitmq:
     additionalConfig: |
