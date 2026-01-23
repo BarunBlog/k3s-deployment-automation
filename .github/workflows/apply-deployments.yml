@@ -156,13 +156,15 @@ jobs:
             # kubectl apply -f config/
 
             # Create secret dynamically
-            kubectl create secret generic rabbitmq-secret \
+            kubectl create secret generic rabbitmq-secret -n development \
               --from-literal=username=${{ secrets.RABBITMQ_DEFAULT_USER }} \
               --from-literal=password=${{ secrets.RABBITMQ_DEFAULT_PASS }} \
               --from-literal=RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_DEFAULT_USER }} \
               --from-literal=RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_DEFAULT_PASS }} \
               --from-literal=RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }} \
               --from-literal=RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }} \
+              --from-literal=default_user.conf="default_user = ${{ secrets.RABBITMQ_DEFAULT_USER }}
+            default_pass = ${{ secrets.RABBITMQ_DEFAULT_PASS }}" \
               --dry-run=client -o yaml | kubectl apply -f -
             
             # install EBS CSI driver using HELM

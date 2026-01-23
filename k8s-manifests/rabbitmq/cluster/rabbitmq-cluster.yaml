@@ -13,7 +13,7 @@ spec:
 
   rabbitmq:
     additionalConfig: |
-      management_path_prefix = /rabbitmq
+      management.path_prefix = /rabbitmq
 
   persistence:
     storageClassName: ebs-sc # Ensure this matches your storage/ manifest
