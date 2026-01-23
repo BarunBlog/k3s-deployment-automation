@@ -157,6 +157,8 @@ jobs:
 
             # Create secret dynamically
             kubectl create secret generic rabbitmq-secret \
+              --from-literal=username=${{ secrets.RABBITMQ_DEFAULT_USER }} \
+              --from-literal=password=${{ secrets.RABBITMQ_DEFAULT_PASS }} \
               --from-literal=RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_DEFAULT_USER }} \
               --from-literal=RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_DEFAULT_PASS }} \
               --from-literal=RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }} \
@@ -175,9 +177,17 @@ jobs:
           
             # Creating the Storage class to store data from rabbitmq
             kubectl apply -f storage/
+          
+            # ----------------------------------- Install RabbitMQ Operator --------------------------------------------
+            echo "Installing RabbitMQ Cluster Operator..."
+            kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml
+            
+            # Wait for operator to be ready
+            kubectl rollout status deployment/rabbitmq-cluster-operator -n rabbitmq-system --timeout=120s
+            # ----------------------------------------------------------------------------------------------------------
 
             # Apply RabbitMQ
-            kubectl apply -f rabbitmq/
+            kubectl apply -f rabbitmq/cluster
 
             # Apply Services (recursive)
             kubectl apply -f services/ -R

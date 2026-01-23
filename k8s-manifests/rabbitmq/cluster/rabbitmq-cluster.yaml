@@ -1,0 +1,28 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 3
+  image: rabbitmq:4.1.0-management-alpine
+
+  # Link the existing secret for credentials
+  rabbitmq:
+    additionalConfig: |
+      management_path_prefix = /rabbitmq
+    # This tells the operator to use existing secret instead of generating one
+    auth:
+      defaultUserSecret:
+        name: rabbitmq-secret
+
+  persistence:
+    storageClassName: ebs-sc # Ensure this matches your storage/ manifest
+    storage: 5Gi
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
