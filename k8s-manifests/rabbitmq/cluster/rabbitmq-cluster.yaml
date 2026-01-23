@@ -4,11 +4,12 @@ metadata:
   name: rabbitmq
 spec:
   replicas: 3
-  image: rabbitmq:4.1.0-management-alpine
+  image: "rabbitmq:4.1.0-management-alpine"
 
   # This tells the operator to use existing secret instead of generating one
-  secret:
-    secretName: rabbitmq-secret
+  secretBackend:
+    externalSecret:
+      name: rabbitmq-secret
 
   rabbitmq:
     additionalConfig: |
