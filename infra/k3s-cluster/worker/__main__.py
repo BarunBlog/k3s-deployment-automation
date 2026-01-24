@@ -241,3 +241,4 @@ aws.iam.RolePolicyAttachment(
 pulumi.export("dynamo_table", scaling_table.name)
 pulumi.export("lambda_function_name", scaling_lambda.name)
 pulumi.export("ebs_csi_policy_arn", ebs_csi_policy.arn)
+pulumi.export("nth_queue_url", nth_queue.id)
