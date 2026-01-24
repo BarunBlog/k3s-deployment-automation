@@ -90,11 +90,22 @@ worker_asg = aws.autoscaling.Group("worker-asg",
     target_group_arns=[target_group_arn],
     health_check_type="EC2",
     health_check_grace_period=600,
+    capacity_rebalance=True,
+    termination_policies=["OldestInstance"], # Predictable termination
+    enabled_metrics=["GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity"],
     tags=[{
         "key": "Name",
         "value": "k3s-worker-node",
         "propagate_at_launch": True,
     }]
+)
+
+# Without it the asg will kill the node immediately
+termination_hook = aws.autoscaling.LifecycleHook("termination-hook",
+    autoscaling_group_name=worker_asg.name,
+    default_result="CONTINUE",
+    heartbeat_timeout=300, # Wait 5 mins for K8s to drain
+    lifecycle_transition="autoscaling:EC2_INSTANCE_TERMINATING"
 )
 
 # Create DynamoDB to prevent multiple scaling events from happening at once

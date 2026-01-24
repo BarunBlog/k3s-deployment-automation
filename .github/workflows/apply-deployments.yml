@@ -176,6 +176,21 @@ jobs:
               --namespace kube-system \
               --set controller.region=ap-southeast-1 \
               --wait
+            
+            # ------------------------- Install AWS Node Termination Handler -------------------------------------------
+            # Add the EKS charts repository
+            helm repo add eks https://aws.github.io/eks-charts
+            helm repo update
+            
+            echo "Installing AWS Node Termination Handler..."
+            helm upgrade --install aws-node-termination-handler eks/aws-node-termination-handler \
+              --namespace kube-system \
+              --set enableSpotInterruptionDraining=true \
+              --set enableRebalanceMonitoring=true \
+              --set enableScheduledEventDraining=true \
+              --wait
+            
+            # ----------------------------------------------------------------------------------------------------------
           
             # Creating the Storage class to store data from rabbitmq
             kubectl apply -f storage/

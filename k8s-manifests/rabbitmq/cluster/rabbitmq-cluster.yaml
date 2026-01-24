@@ -19,6 +19,10 @@ spec:
     storageClassName: ebs-sc # Ensure this matches your storage/ manifest
     storage: 10Gi
 
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+    whenScaled: Delete
+
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
