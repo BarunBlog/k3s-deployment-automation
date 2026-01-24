@@ -101,12 +101,45 @@ worker_asg = aws.autoscaling.Group("worker-asg",
 )
 
 # Without it the asg will kill the node immediately
+# Pauses the Ec2 destruction
 termination_hook = aws.autoscaling.LifecycleHook("termination-hook",
     autoscaling_group_name=worker_asg.name,
     default_result="CONTINUE",
     heartbeat_timeout=300, # Wait 5 mins for K8s to drain
     lifecycle_transition="autoscaling:EC2_INSTANCE_TERMINATING"
 )
+
+# Create the SQS Queue for NTH to listen to
+# holds the "Termination Notice" sent by AWS
+nth_queue = aws.sqs.Queue("nth-queue",
+    message_retention_seconds=300,
+    visibility_timeout_seconds=300)
+
+# Allow EventBridge to write to the SQS Queue
+# This ensures that only AWS EventBridge has the key to drop messages into SQS mailbox
+queue_policy = aws.sqs.QueuePolicy("nth-queue-policy",
+    queue_url=nth_queue.id,
+    policy=nth_queue.arn.apply(lambda arn: json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Principal": {"Service": "events.amazonaws.com"},
+            "Action": "sqs:SendMessage",
+            "Resource": arn,
+        }]
+    })))
+
+# Create EventBridge Rule for ASG Termination
+asg_event_rule = aws.cloudwatch.EventRule("asg-termination-rule",
+    event_pattern=json.dumps({
+        "source": ["aws.autoscaling"],
+        "detail-type": ["EC2 Instance-terminate Lifecycle Action"]
+    }))
+
+# Target the SQS Queue
+event_target = aws.cloudwatch.EventTarget("nth-event-target",
+    rule=asg_event_rule.name,
+    arn=nth_queue.arn)
 
 # Create DynamoDB to prevent multiple scaling events from happening at once
 scaling_table = aws.dynamodb.Table(

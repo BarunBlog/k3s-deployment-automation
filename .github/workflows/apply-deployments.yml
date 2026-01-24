@@ -181,12 +181,16 @@ jobs:
             # Add the EKS charts repository
             helm repo add eks https://aws.github.io/eks-charts
             helm repo update
+          
+            # Get the SQS Queue URL from Pulumi first
+            SQS_URL=$(pulumi stack output nth_queue_url --cwd infra/common -s dev)
             
             echo "Installing AWS Node Termination Handler..."
             helm upgrade --install aws-node-termination-handler eks/aws-node-termination-handler \
               --namespace kube-system \
               --set enableSpotInterruptionDraining=true \
               --set enableRebalanceMonitoring=true \
+              --set queueUrl=$SQS_URL \
               --set enableScheduledEventDraining=true \
               --wait
             
