@@ -190,10 +190,9 @@ jobs:
             echo "Installing AWS Node Termination Handler..."
             helm upgrade --install aws-node-termination-handler eks/aws-node-termination-handler \
               --namespace kube-system \
-              --set enableSpotInterruptionDraining=true \
-              --set enableRebalanceMonitoring=true \
+              --set enableSqsTerminationDraining=true \
               --set queueUrl=$SQS_URL \
-              --set enableScheduledEventDraining=true \
+              --set awsRegion=ap-southeast-1 \
               --wait
             
             # ----------------------------------------------------------------------------------------------------------
