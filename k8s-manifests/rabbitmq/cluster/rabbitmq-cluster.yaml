@@ -14,17 +14,33 @@ spec:
   rabbitmq:
     additionalConfig: |
       management.path_prefix = /rabbitmq
+      # Enforce data replication to Quorum Queues
+      default_queue_type = quorum
 
   persistence:
-    storageClassName: ebs-sc # Ensure this matches your storage/ manifest
+    storageClassName: ebs-sc # must need to match the storage/ manifest
     storage: 10Gi
 
   override:
     statefulSet:
       spec:
+        # Auto cleanup disks
         persistentVolumeClaimRetentionPolicy:
           whenDeleted: Delete
           whenScaled: Delete
+
+        template:
+          spec:
+            # give RabbitMQ time to move data before the node is hard-deleted
+            terminationGracePeriodSeconds: 300
+
+            containers:
+              - name: rabbitmq
+                # Wait for data sync before killing
+                lifecycle:
+                  preStop:
+                    exec:
+                      command: [ "/bin/sh", "-c", "rabbitmq-queues check_if_node_is_quorum_critical" ]
 
   affinity:
     podAntiAffinity:
