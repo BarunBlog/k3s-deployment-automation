@@ -19,6 +19,17 @@ spec:
     storageClassName: ebs-sc # Ensure this matches your storage/ manifest
     storage: 10Gi
 
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - rabbitmq
+          topologyKey: "kubernetes.io/hostname"
+
   resources:
     requests:
       cpu: 250m
