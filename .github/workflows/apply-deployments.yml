@@ -145,7 +145,7 @@ jobs:
               --set grafana.enabled=true \
               --set grafana.adminPassword=${{ secrets.GRAFANA_PASSWORD }} \
               --set "grafana.grafana\.ini.server.domain=${ALB_DNS}" \
-              --set "grafana.grafana\.ini.server.root_url=%(protocol)s://%(domain)s/grafana/" \
+              --set "grafana.grafana\.ini.server.root_url=http://${ALB_DNS}/grafana/" \
               --set "grafana.grafana\.ini.server.serve_from_sub_path=true" \
               --wait
           
