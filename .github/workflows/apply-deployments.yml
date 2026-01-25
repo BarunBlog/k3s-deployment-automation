@@ -42,12 +42,12 @@ jobs:
           GIT_RUNNER_IP=$(pulumi stack output git_runner_public_ip --cwd infra/k3s-cluster/master -s dev)
           MASTER_NODE_IP=$(pulumi stack output master_private_ip --cwd infra/k3s-cluster/master -s dev)
           ALB_DNS=$(pulumi stack output alb_dns --cwd infra/k3s-cluster/master -s dev)
-#          SQS_URL=$(pulumi stack output nth_queue_url --cwd infra/k3s-cluster/worker -s dev)
+          # SQS_URL=$(pulumi stack output nth_queue_url --cwd infra/k3s-cluster/worker -s dev)
           
           echo "GIT_RUNNER_IP=$GIT_RUNNER_IP" >> $GITHUB_ENV
           echo "MASTER_NODE_IP=$MASTER_NODE_IP" >> $GITHUB_ENV
           echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
-          echo "SQS_URL=$SQS_URL" >> $GITHUB_ENV
+          # echo "SQS_URL=$SQS_URL" >> $GITHUB_ENV
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -181,19 +181,19 @@ jobs:
             
             # ------------------------- Install AWS Node Termination Handler -------------------------------------------
             # Add the EKS charts repository
-#            helm repo add eks https://aws.github.io/eks-charts
-#            helm repo update
-#
-#            # Get the SQS Queue URL from Pulumi first
-#            SQS_URL=$(pulumi stack output nth_queue_url --cwd infra/common -s dev)
-#
-#            echo "Installing AWS Node Termination Handler..."
-#            helm upgrade --install aws-node-termination-handler eks/aws-node-termination-handler \
-#              --namespace kube-system \
-#              --set enableSqsTerminationDraining=true \
-#              --set queueUrl=$SQS_URL \
-#              --set awsRegion=ap-southeast-1 \
-#              --wait
+            # helm repo add eks https://aws.github.io/eks-charts
+            # helm repo update
+          
+            # Get the SQS Queue URL from Pulumi first
+            # SQS_URL=$(pulumi stack output nth_queue_url --cwd infra/common -s dev)
+            
+            # echo "Installing AWS Node Termination Handler..."
+            # helm upgrade --install aws-node-termination-handler eks/aws-node-termination-handler \
+            #  --namespace kube-system \
+            #  --set enableSqsTerminationDraining=true \
+            #  --set queueUrl=$SQS_URL \
+            #  --set awsRegion=ap-southeast-1 \
+            #  --wait
             
             # ----------------------------------------------------------------------------------------------------------
           
