@@ -131,7 +131,7 @@ jobs:
               --namespace ingress-nginx --create-namespace \
               -f helm/ingress-nginx/values-prod.yaml
           
-            # ----------------------------------- Install or Upgrade Prometheus ----------------------------------------
+            # ----------------------------------- Install Prometheus & Grafana -----------------------------------------
             
             # Add the prometheus repository
             helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -142,8 +142,11 @@ jobs:
               --set prometheus.prometheusSpec.retention=7d \
               --set prometheus.prometheusSpec.externalUrl="http://${ALB_DNS}/prometheus" \
               --set prometheus.prometheusSpec.routePrefix="/prometheus" \
-              --set prometheus.service.type=NodePort \
-              --set prometheus.service.nodePort=30090 \
+              --set grafana.enabled=true \
+              --set grafana.adminPassword=${{ secrets.GRAFANA_PASSWORD }} \
+              --set "grafana.grafana\.ini.server.domain=${ALB_DNS}" \
+              --set "grafana.grafana\.ini.server.root_url=%(protocol)s://%(domain)s/grafana/" \
+              --set "grafana.grafana\.ini.server.serve_from_sub_path=true" \
               --wait
           
             # ------------------------------------ Prometheus Installation end -----------------------------------------
