@@ -144,7 +144,7 @@ jobs:
               --set prometheus.prometheusSpec.routePrefix="/prometheus" \
               --set prometheus.prometheusSpec.resources.requests.cpu=200m \
               --set prometheus.prometheusSpec.resources.limits.cpu=500m \
-              --set prometheus.prometheusSpec.resources.requests.memory=512Mi
+              --set prometheus.prometheusSpec.resources.requests.memory=512Mi \
               --set grafana.enabled=true \
               --set grafana.adminPassword=${{ secrets.GRAFANA_PASSWORD }} \
               --set "grafana.grafana\.ini.server.domain=${ALB_DNS}" \
