@@ -1,0 +1,22 @@
+// Groups help visually separate AWS from K3s
+AWS Cloud [icon: aws, color: orange] {
+  Lambda_Scaler [icon: lambda]
+  Lock_Table [icon: dynamodb]
+  AutoScaling_Group [icon: ec2]
+}
+
+K3s_Cluster [icon: kubernetes, color: blue] {
+  Master_Node [icon: k8s-control-plane]
+  Worker_Nodes [icon: k8s-node]
+  
+  group Services {
+    Order_Service [icon: python]
+    Prometheus [icon: prometheus]
+  }
+}
+
+// Defining the logic flow
+Prometheus > Lambda_Scaler: "1. Metrics Trip Threshold"
+Lambda_Scaler > Lock_Table: "2. Check Scaling Lock"
+Lambda_Scaler > AutoScaling_Group: "3. Update Desired Capacity"
+AutoScaling_Group > Worker_Nodes: "4. Provision New EC2"
